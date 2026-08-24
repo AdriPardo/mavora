@@ -1,5 +1,6 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
+import { useAuth } from "@/features/auth/auth-provider";
 
 const PANELS = [
   {
@@ -37,11 +38,17 @@ const PANELS = [
 ] as const;
 
 export function OverviewPage() {
+  const { organization } = useAuth();
+
   return (
     <div>
       <PageHeader
         title="Centro de operaciones"
-        description="Vista operativa de tu equipo de marketing. No es un chat: es el estado del sistema."
+        description={
+          organization
+            ? `${organization.name} · ${organization.role}. Vista operativa de tu equipo de marketing.`
+            : "Vista operativa de tu equipo de marketing. No es un chat: es el estado del sistema."
+        }
       />
       <div className="grid gap-3 sm:grid-cols-2">
         {PANELS.map((panel) => (

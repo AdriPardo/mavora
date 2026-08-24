@@ -1,8 +1,8 @@
 # Mavora
 
-Plataforma SaaS de equipo de marketing autónomo con IA. Este repositorio es un monolito modular: backend Java y frontend React en el mismo repo.
+Plataforma SaaS de equipo de marketing autónomo con IA. Monolito modular: backend Java y frontend React.
 
-Estado actual: **Fase 0 — cimientos**. Arranca, health-check, shell de producto y tests de arquitectura. Todavía no hay registro, agentes ni LLM.
+Estado actual: **Fase 1 — identidad y tenancy**. Registro, sesión en cookie HttpOnly, organización al registrarse, RBAC almacenado y aislamiento entre tenants. Todavía no hay empresa, agentes ni LLM.
 
 ## Requisitos
 
@@ -14,49 +14,34 @@ Estado actual: **Fase 0 — cimientos**. Arranca, health-check, shell de product
 ## Arranque local
 
 ```bash
-# 1. Base de datos
 docker compose -f infrastructure/docker-compose.yml up -d postgres
-
-# 2. Backend  (http://localhost:8080)
-cd backend
-./gradlew bootRun
-
-# 3. Frontend (http://localhost:5173)
-cd frontend
-npm install
-npm run dev
+cd backend && ./gradlew bootRun
+cd frontend && npm install && npm run dev
 ```
 
-Copia `.env.example` a `.env` si necesitas cambiar credenciales. No subas secretos.
+UI: http://localhost:5173  
+Crea una cuenta en `/register`. La sesión viaja en cookie `mavora_session` (HttpOnly, SameSite=Lax) a través del proxy de Vite.
 
-La SPA hace proxy de `/api` y `/actuator` al backend. Comprueba el estado en **Ajustes**.
+Copia `.env.example` a `.env` si necesitas cambiar credenciales. No subas secretos.
 
 ## Tests
 
 ```bash
-cd backend
-./gradlew test
+cd backend && ./gradlew test
+cd frontend && npm run build
 ```
 
-Los tests de integración usan Testcontainers si Docker está disponible. Si no, esperan PostgreSQL en `localhost:5432` (`mavora_test` / usuario `mavora`).
-
-```bash
-cd frontend
-npm run build
-```
+Los IT usan Testcontainers si Docker está disponible; si no, PostgreSQL en `localhost:5432` (`mavora_test` / `mavora`).
 
 ## API
 
-- `GET /api/v1/health` — liveness de aplicación
-- `GET /actuator/health` — probes
-- `/swagger-ui.html` — OpenAPI (desactivar en producción con `API_DOCS_ENABLED=false`)
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+- `GET /api/v1/organizations/{orgId}`
+- `GET /api/v1/organizations/{orgId}/members`
+- `GET /api/v1/health`
+- OpenAPI: `/swagger-ui.html` (`API_DOCS_ENABLED=false` en producción)
 
-Hibernate `ddl-auto` está en `validate`. El esquema solo cambia con Flyway.
-
-## Estructura
-
-```
-backend/          Spring Boot 3.5, Java 21, Gradle
-frontend/         React + TypeScript + Vite
-infrastructure/   Docker Compose (Postgres)
-```
+Hibernate `ddl-auto=validate`. El esquema solo cambia con Flyway.

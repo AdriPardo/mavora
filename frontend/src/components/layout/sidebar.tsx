@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/features/auth/auth-provider";
 
 export const NAV_ITEMS = [
   { to: "/overview", label: "Overview", icon: LayoutDashboard },
@@ -31,10 +32,15 @@ type SidebarProps = {
 };
 
 export function Sidebar({ onNavigate }: SidebarProps) {
+  const { organization, account } = useAuth();
+
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center px-4">
+      <div className="flex h-14 flex-col justify-center px-4">
         <span className="text-sm font-semibold tracking-tight">Mavora</span>
+        {organization ? (
+          <span className="truncate text-xs text-zinc-500 dark:text-zinc-400">{organization.name}</span>
+        ) : null}
       </div>
       <nav className="flex-1 space-y-0.5 px-2 pb-4" aria-label="Principal">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
@@ -55,6 +61,11 @@ export function Sidebar({ onNavigate }: SidebarProps) {
           </NavLink>
         ))}
       </nav>
+      {account ? (
+        <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-800">
+          <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{account.user.email}</p>
+        </div>
+      ) : null}
     </div>
   );
 }

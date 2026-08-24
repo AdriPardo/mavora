@@ -1,22 +1,52 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/layout/page-header";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/features/auth/auth-provider";
 import { fetchHealth } from "@/lib/api";
 
 export function SettingsPage() {
+  const { account, organization, logout } = useAuth();
+  const navigate = useNavigate();
+  const [loggingOut, setLoggingOut] = useState(false);
   const health = useQuery({
     queryKey: ["health"],
     queryFn: ({ signal }) => fetchHealth(signal),
     retry: 1,
   });
 
+  async function onLogout() {
+    setLoggingOut(true);
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <PageHeader
         title="Ajustes"
-        description="Preferencias de la interfaz y estado del sistema."
+        description="Cuenta, apariencia y estado del sistema."
       />
+
+      <section className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+        <h2 className="text-sm font-medium">Cuenta</h2>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          {account?.user.email}
+          {organization ? ` · ${organization.name} · ${organization.role}` : ""}
+        </p>
+        <div className="mt-4">
+          <Button variant="secondary" onClick={() => void onLogout()} disabled={loggingOut}>
+            {loggingOut ? "Cerrando sesión…" : "Cerrar sesión"}
+          </Button>
+        </div>
+      </section>
 
       <section className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
         <h2 className="text-sm font-medium">Apariencia</h2>
