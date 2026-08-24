@@ -12,17 +12,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Clock;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
+import java.util.Optional;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE + 20)
 public class SessionAuthenticationFilter extends OncePerRequestFilter {
 
     private final SessionRepository sessionRepository;
@@ -36,7 +32,7 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
             UserRepository userRepository,
             SessionTokenService sessionTokenService,
             Clock clock,
-            @Value("${mavora.auth.cookie-name}") String cookieName
+            String cookieName
     ) {
         this.sessionRepository = sessionRepository;
         this.userRepository = userRepository;
@@ -49,7 +45,7 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            readRawToken(request).ifPresent(raw -> authenticate(raw));
+            readRawToken(request).ifPresent(this::authenticate);
         }
         filterChain.doFilter(request, response);
     }
@@ -65,20 +61,22 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
                             null,
                             List.of(new SimpleGrantedAuthority("ROLE_USER"))
                     );
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContext context = SecurityContextHolder.createEmptyContext();
+                    context.setAuthentication(authentication);
+                    SecurityContextHolder.setContext(context);
                 });
     }
 
-    private java.util.Optional<String> readRawToken(HttpServletRequest request) {
+    private Optional<String> readRawToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
         for (Cookie cookie : cookies) {
             if (cookieName.equals(cookie.getName()) && cookie.getValue() != null && !cookie.getValue().isBlank()) {
-                return java.util.Optional.of(cookie.getValue());
+                return Optional.of(cookie.getValue());
             }
         }
-        return java.util.Optional.empty();
+        return Optional.empty();
     }
 }

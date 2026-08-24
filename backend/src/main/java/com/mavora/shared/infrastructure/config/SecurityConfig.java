@@ -1,11 +1,13 @@
 package com.mavora.shared.infrastructure.config;
 
+import com.mavora.identity.infrastructure.security.SessionAuthenticationFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +21,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -33,7 +36,8 @@ public class SecurityConfig {
             HttpSecurity http,
             CorsConfigurationSource corsConfigurationSource,
             AuthenticationEntryPoint problemDetailsAuthenticationEntryPoint,
-            AccessDeniedHandler problemDetailsAccessDeniedHandler
+            AccessDeniedHandler problemDetailsAccessDeniedHandler,
+            ObjectProvider<SessionAuthenticationFilter> sessionAuthenticationFilter
     ) throws Exception {
         http
                 // SPA + SameSite=Lax cookie. Mutating requests with a foreign Origin are rejected.
@@ -68,6 +72,9 @@ public class SecurityConfig {
                         .authenticationEntryPoint(problemDetailsAuthenticationEntryPoint)
                         .accessDeniedHandler(problemDetailsAccessDeniedHandler)
                 );
+        sessionAuthenticationFilter.ifAvailable(filter ->
+                http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
+        );
         return http.build();
     }
 
