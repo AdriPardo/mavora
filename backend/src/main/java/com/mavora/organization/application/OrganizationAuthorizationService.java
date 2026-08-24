@@ -1,10 +1,11 @@
 package com.mavora.organization.application;
 
-import com.mavora.organization.domain.Organization;
 import com.mavora.organization.domain.OrganizationMember;
 import com.mavora.organization.domain.OrganizationMemberRepository;
 import com.mavora.organization.domain.OrganizationNotFoundException;
 import com.mavora.organization.domain.OrganizationRepository;
+import com.mavora.organization.domain.OrganizationRole;
+import com.mavora.shared.domain.ForbiddenActionException;
 import com.mavora.shared.domain.OrganizationId;
 import com.mavora.shared.domain.UserId;
 import org.springframework.stereotype.Service;
@@ -26,13 +27,25 @@ public class OrganizationAuthorizationService {
 
     @Transactional(readOnly = true)
     public MembershipAccess requireMember(OrganizationId organizationId, UserId userId) {
-        Organization organization = organizationRepository.findById(organizationId)
+        var organization = organizationRepository.findById(organizationId)
                 .orElseThrow(OrganizationNotFoundException::new);
         OrganizationMember member = memberRepository.findByOrganizationAndUser(organizationId, userId)
                 .orElseThrow(OrganizationNotFoundException::new);
         return new MembershipAccess(organization, member);
     }
 
-    public record MembershipAccess(Organization organization, OrganizationMember member) {
+    @Transactional(readOnly = true)
+    public MembershipAccess requireWriter(OrganizationId organizationId, UserId userId) {
+        MembershipAccess access = requireMember(organizationId, userId);
+        if (access.member().role() == OrganizationRole.VIEWER) {
+            throw new ForbiddenActionException();
+        }
+        return access;
+    }
+
+    public record MembershipAccess(
+            com.mavora.organization.domain.Organization organization,
+            OrganizationMember member
+    ) {
     }
 }

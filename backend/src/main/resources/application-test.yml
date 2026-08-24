@@ -12,3 +12,11 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
+
+mavora:
+  jobs:
+    inline: true
+    poll-interval-ms: 60000
+  llm:
+    provider: fake
+    monthly-budget-cents: 5000

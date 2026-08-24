@@ -63,6 +63,19 @@ mavora:
     cookie-name: mavora_session
     cookie-secure: ${COOKIE_SECURE:false}
     cookie-same-site: Lax
+  llm:
+    provider: ${LLM_PROVIDER:fake}
+    base-url: ${LLM_BASE_URL:https://api.openai.com/v1}
+    api-key: ${LLM_API_KEY:}
+    model-cmo: ${LLM_MODEL_CMO:mavora-fake}
+    monthly-budget-cents: ${LLM_MONTHLY_BUDGET_CENTS:2000}
+    timeout: 30s
+  jobs:
+    inline: ${MAVORA_JOBS_INLINE:false}
+    poll-interval-ms: 2000
+  website:
+    timeout: 8s
+    max-bytes: 524288
 
 logging:
   pattern:

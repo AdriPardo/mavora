@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Megaphone,
   Plug,
+  Search,
   Settings,
   Users,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 export const NAV_ITEMS = [
   { to: "/overview", label: "Overview", icon: LayoutDashboard },
   { to: "/strategy", label: "Estrategia", icon: Compass },
+  { to: "/research", label: "Investigación", icon: Search },
   { to: "/content", label: "Contenido", icon: FileText },
   { to: "/campaigns", label: "Campañas", icon: Megaphone },
   { to: "/analytics", label: "Analítica", icon: BarChart3 },
