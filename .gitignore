@@ -1,0 +1,31 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# Java / Gradle
+backend/.gradle/
+backend/build/
+backend/out/
+backend/bin/
+*.class
+*.jar
+!backend/gradle/wrapper/gradle-wrapper.jar
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Logs / coverage
+*.log
+coverage/
+*.hprof

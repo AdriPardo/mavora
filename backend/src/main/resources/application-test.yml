@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/mavora_test}
+    username: ${DATABASE_USERNAME:mavora}
+    password: ${DATABASE_PASSWORD:mavora}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
