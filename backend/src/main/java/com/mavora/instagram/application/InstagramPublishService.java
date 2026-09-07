@@ -3,6 +3,7 @@ package com.mavora.instagram.application;
 import com.mavora.instagram.domain.InstagramAccount;
 import com.mavora.instagram.domain.InstagramAccountRepository;
 import com.mavora.instagram.domain.InstagramFormat;
+import com.mavora.instagram.domain.InstagramProvider;
 import com.mavora.instagram.domain.InstagramSlot;
 import com.mavora.instagram.domain.InstagramSlotRepository;
 import com.mavora.instagram.domain.MediaAsset;
@@ -25,8 +26,9 @@ public class InstagramPublishService {
     private final InstagramAccountRepository accountRepository;
     private final MediaAssetRepository mediaAssetRepository;
     private final MediaUrlSigner mediaUrlSigner;
-    private final InstagramPublisher publisher;
+    private final List<InstagramPublisher> publishers;
     private final InstagramAccountService accountService;
+    private final MetaConnectionService metaConnectionService;
     private final Clock clock;
 
     public InstagramPublishService(
@@ -34,16 +36,18 @@ public class InstagramPublishService {
             InstagramAccountRepository accountRepository,
             MediaAssetRepository mediaAssetRepository,
             MediaUrlSigner mediaUrlSigner,
-            InstagramPublisher publisher,
+            List<InstagramPublisher> publishers,
             InstagramAccountService accountService,
+            MetaConnectionService metaConnectionService,
             Clock clock
     ) {
         this.slotRepository = slotRepository;
         this.accountRepository = accountRepository;
         this.mediaAssetRepository = mediaAssetRepository;
         this.mediaUrlSigner = mediaUrlSigner;
-        this.publisher = publisher;
+        this.publishers = publishers;
         this.accountService = accountService;
+        this.metaConnectionService = metaConnectionService;
         this.clock = clock;
     }
 
@@ -76,7 +80,7 @@ public class InstagramPublishService {
         try {
             slot.claimForPublish();
             slotRepository.save(slot);
-            InstagramPublisher.PublishResult result = publisher.publish(toCommand(slot, account));
+            InstagramPublisher.PublishResult result = publisherFor(account.provider()).publish(toCommand(slot, account));
             slot.markPublished(result.igMediaId(), clock.instant());
             slotRepository.save(slot);
             return true;
@@ -112,13 +116,24 @@ public class InstagramPublishService {
         if (caption.length() > 2200) {
             caption = caption.substring(0, 2200);
         }
+        String graphVersion = metaConnectionService.resolve(account.organizationId())
+                .map(MetaAppCredentials::graphVersion)
+                .orElse("v21.0");
         return new InstagramPublisher.PublishCommand(
                 account.igUserId(),
                 accountService.decryptToken(account),
                 format,
                 caption,
                 images,
-                video
+                video,
+                graphVersion
         );
+    }
+
+    private InstagramPublisher publisherFor(InstagramProvider provider) {
+        return publishers.stream()
+                .filter(candidate -> candidate.supports(provider))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No Instagram publisher for " + provider));
     }
 }

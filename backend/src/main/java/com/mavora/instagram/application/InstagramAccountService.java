@@ -11,7 +11,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +21,8 @@ public class InstagramAccountService {
     private final OrganizationAuthorizationService authorizationService;
     private final InstagramAccountRepository accountRepository;
     private final TokenProtector tokenProtector;
-    private final ObjectProvider<InstagramOAuthClient> oauthClient;
+    private final InstagramOAuthClient oauthClient;
+    private final MetaConnectionService metaConnectionService;
     private final Clock clock;
     private final InstagramProvider configuredProvider;
 
@@ -30,7 +30,8 @@ public class InstagramAccountService {
             OrganizationAuthorizationService authorizationService,
             InstagramAccountRepository accountRepository,
             TokenProtector tokenProtector,
-            ObjectProvider<InstagramOAuthClient> oauthClient,
+            InstagramOAuthClient oauthClient,
+            MetaConnectionService metaConnectionService,
             Clock clock,
             @Value("${mavora.instagram.provider:fake}") String provider
     ) {
@@ -38,6 +39,7 @@ public class InstagramAccountService {
         this.accountRepository = accountRepository;
         this.tokenProtector = tokenProtector;
         this.oauthClient = oauthClient;
+        this.metaConnectionService = metaConnectionService;
         this.clock = clock;
         this.configuredProvider = InstagramProvider.valueOf(provider.trim().toUpperCase());
     }
@@ -50,14 +52,16 @@ public class InstagramAccountService {
 
     public Status statusInternal(OrganizationId organizationId) {
         Optional<InstagramAccount> account = accountRepository.findByOrganization(organizationId);
-        return account.map(this::toStatus).orElseGet(() -> new Status(
+        boolean oauthReady = metaConnectionService.resolve(organizationId).isPresent();
+        return account.map(found -> toStatus(found, oauthReady)).orElseGet(() -> new Status(
                 configuredProvider.name().toLowerCase(),
                 false,
                 null,
                 null,
                 false,
                 null,
-                true
+                true,
+                oauthReady
         ));
     }
 
@@ -85,27 +89,22 @@ public class InstagramAccountService {
     @Transactional(readOnly = true)
     public ConnectUrl connectUrl(OrganizationId organizationId, UserId userId) {
         authorizationService.requireWriter(organizationId, userId);
-        InstagramOAuthClient client = oauthClient.getIfAvailable();
-        if (configuredProvider != InstagramProvider.META || client == null) {
-            throw new DomainException(
-                    "Instagram OAuth is not configured. Set INSTAGRAM_PROVIDER=meta and Meta app credentials, "
-                            + "or use the demo connect in local/fake mode."
-            );
-        }
+        MetaAppCredentials credentials = metaConnectionService.resolve(organizationId)
+                .orElseThrow(() -> new DomainException(
+                        "Guarda el App ID y el App Secret de Meta en Integraciones antes de conectar Instagram."
+                ));
         Instant exp = clock.instant().plusSeconds(600);
         String payload = organizationId.value() + "." + exp.getEpochSecond();
         String state = payload + "." + tokenProtector.sign(payload);
-        return new ConnectUrl(client.authorizeUrl(state), "meta");
+        return new ConnectUrl(oauthClient.authorizeUrl(credentials, state), "meta");
     }
 
     @Transactional
     public OrganizationId completeOAuth(String code, String state) {
-        InstagramOAuthClient client = oauthClient.getIfAvailable();
-        if (configuredProvider != InstagramProvider.META || client == null) {
-            throw new DomainException("Instagram OAuth is not configured");
-        }
         OrganizationId organizationId = parseState(state);
-        InstagramOAuthClient.ConnectedAccount connected = client.exchange(code);
+        MetaAppCredentials credentials = metaConnectionService.resolve(organizationId)
+                .orElseThrow(() -> new DomainException("Instagram OAuth is not configured"));
+        InstagramOAuthClient.ConnectedAccount connected = oauthClient.exchange(credentials, code);
         Instant now = clock.instant();
         upsert(
                 organizationId,
@@ -118,6 +117,36 @@ public class InstagramAccountService {
                 now
         );
         return organizationId;
+    }
+
+    @Transactional
+    public Status connectWithToken(
+            OrganizationId organizationId,
+            UserId userId,
+            String username,
+            String igUserId,
+            String pageId,
+            String accessToken
+    ) {
+        authorizationService.requireWriter(organizationId, userId);
+        if (accessToken == null || accessToken.isBlank() || accessToken.length() < 20) {
+            throw new DomainException("Pega un token de página de Meta (mínimo 20 caracteres)");
+        }
+        if (igUserId == null || igUserId.isBlank()) {
+            throw new DomainException("El Instagram Business Account ID es obligatorio");
+        }
+        Instant now = clock.instant();
+        InstagramAccount saved = upsert(
+                organizationId,
+                InstagramProvider.META,
+                igUserId.trim(),
+                username,
+                pageId,
+                tokenProtector.encrypt(accessToken.trim()),
+                now.plusSeconds(60L * 60 * 24 * 60),
+                now
+        );
+        return toStatus(saved, true);
     }
 
     @Transactional
@@ -185,6 +214,10 @@ public class InstagramAccountService {
     }
 
     private Status toStatus(InstagramAccount account) {
+        return toStatus(account, metaConnectionService.resolve(account.organizationId()).isPresent());
+    }
+
+    private Status toStatus(InstagramAccount account, boolean oauthReady) {
         return new Status(
                 account.provider().name().toLowerCase(),
                 account.isConnected(),
@@ -192,7 +225,8 @@ public class InstagramAccountService {
                 account.isConnected() ? account.igUserId() : null,
                 account.isConnected() && account.autonomyEnabled(),
                 account.isConnected() ? account.connectedAt() : null,
-                true
+                true,
+                oauthReady
         );
     }
 
@@ -203,7 +237,8 @@ public class InstagramAccountService {
             String igUserId,
             boolean autonomyEnabled,
             Instant connectedAt,
-            boolean professionalAccountRequired
+            boolean professionalAccountRequired,
+            boolean oauthReady
     ) {
     }
 
