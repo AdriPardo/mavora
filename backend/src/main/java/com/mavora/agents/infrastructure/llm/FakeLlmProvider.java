@@ -23,14 +23,19 @@ public class FakeLlmProvider implements LlmClient {
     @Override
     public LlmCompletion complete(LlmRequest request) {
         try {
-            String content = switch (request.agentType()) {
-                case CMO -> cmo(request.userPrompt());
-                case RESEARCHER -> research(request.userPrompt());
-                case CONTENT -> content(request.userPrompt());
-                case SOCIAL -> social();
-                case ANALYST -> analytics();
-                case INSTAGRAM -> instagram(request.userPrompt());
-            };
+            String content;
+            if (request.userPrompt() != null && request.userPrompt().contains("TASK=BUSINESS_IMPORT")) {
+                content = businessImport(request.userPrompt());
+            } else {
+                content = switch (request.agentType()) {
+                    case CMO -> cmo(request.userPrompt());
+                    case RESEARCHER -> research(request.userPrompt());
+                    case CONTENT -> content(request.userPrompt());
+                    case SOCIAL -> social();
+                    case ANALYST -> analytics();
+                    case INSTAGRAM -> instagram(request.userPrompt());
+                };
+            }
             int tokens = Math.max(32, content.length() / 4);
             return new LlmCompletion(content, request.model(), tokens, tokens, 1);
         } catch (Exception exception) {
@@ -97,6 +102,35 @@ public class FakeLlmProvider implements LlmClient {
         publications.add(publication("linkedin", "Un equipo de marketing que recuerda lo que funcionó la semana pasada. Eso es Mavora."));
         publications.add(publication("x", "No más chat para “hacer marketing”. Observar → proponer → aprobar → medir."));
         node.set("publications", publications);
+        return objectMapper.writeValueAsString(node);
+    }
+
+    private String businessImport(String prompt) throws Exception {
+        String username = extract(prompt, "Username:");
+        String name = extract(prompt, "Name:");
+        String biography = extract(prompt, "Biography:");
+        String website = extract(prompt, "Website:");
+        String category = extract(prompt, "Category:");
+        if (name.isBlank()) {
+            name = username.replace("@", "").replace('.', ' ').trim();
+        }
+        if (name.isBlank()) {
+            name = "Marca";
+        }
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put("companyName", name);
+        node.put("websiteUrl", website);
+        node.put("description", biography.isBlank()
+                ? "Negocio activo en Instagram (" + username + ")."
+                : biography);
+        node.put("market", category.isBlank() ? "Audiencia de Instagram en español" : category);
+        node.put("productName", name);
+        node.put("productDescription", biography);
+        node.put("voice", "Directa y clara, como el perfil de " + username);
+        node.put("offer", biography.isBlank() ? name + " publica con una oferta visible en el perfil." : biography);
+        node.put("cta", website.isBlank() ? "Escríbenos por DM." : "Enlace en la bio.");
+        node.put("audience", "Personas que siguen o descubren " + username);
+        node.put("extraNotes", "Rellenado desde el perfil de Instagram " + username + ". Revisar antes de publicar.");
         return objectMapper.writeValueAsString(node);
     }
 

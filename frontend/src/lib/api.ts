@@ -336,6 +336,8 @@ export type InstagramStatus = {
   connectedAt: string | null;
   professionalAccountRequired: boolean;
   oauthReady: boolean;
+  filledFromProfile: string[];
+  profileSummary: string | null;
 };
 
 export type MetaSetup = {

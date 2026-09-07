@@ -80,6 +80,45 @@ public final class BrandBrief {
         this.updatedAt = now;
     }
 
+    public java.util.List<String> fillBlanks(
+            String voice,
+            String offer,
+            String cta,
+            String audience,
+            String extraNotes,
+            Instant now
+    ) {
+        java.util.List<String> filled = new java.util.ArrayList<>();
+        if (this.voice == null && notBlank(voice)) {
+            this.voice = clamp(voice, 500);
+            filled.add("brief.voice");
+        }
+        if (this.offer == null && notBlank(offer)) {
+            this.offer = clamp(offer, 2000);
+            filled.add("brief.offer");
+        }
+        if (this.cta == null && notBlank(cta)) {
+            this.cta = clamp(cta, 300);
+            filled.add("brief.cta");
+        }
+        if (this.audience == null && notBlank(audience)) {
+            this.audience = clamp(audience, 500);
+            filled.add("brief.audience");
+        }
+        if (this.extraNotes == null && notBlank(extraNotes)) {
+            this.extraNotes = clamp(extraNotes, 4000);
+            filled.add("brief.extraNotes");
+        }
+        if (!filled.isEmpty()) {
+            this.updatedAt = now;
+        }
+        return filled;
+    }
+
+    private static boolean notBlank(String value) {
+        return value != null && !value.isBlank();
+    }
+
     private static String clamp(String value, int max) {
         if (value == null || value.isBlank()) {
             return null;

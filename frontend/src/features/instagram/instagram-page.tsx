@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -148,7 +148,10 @@ export function InstagramPage() {
       )}
 
       <Panel title="Brief de marca">
-        <p className="mb-3">Empresa, oferta, voz y CTA. Mavora ya usa también el perfil y los productos del overview.</p>
+        <p className="mb-3">
+          Al conectar Instagram rellenamos estos campos con la bio, la web y los captions. Revisa y corrige; no
+          inventamos métricas.
+        </p>
         <BriefForm
           initial={brief.data}
           saving={saveBrief.isPending}
@@ -286,6 +289,14 @@ function BriefForm({
   const [cta, setCta] = useState(initial?.cta ?? "");
   const [audience, setAudience] = useState(initial?.audience ?? "");
   const [extraNotes, setExtraNotes] = useState(initial?.extraNotes ?? "");
+
+  useEffect(() => {
+    setVoice(initial?.voice ?? "");
+    setOffer(initial?.offer ?? "");
+    setCta(initial?.cta ?? "");
+    setAudience(initial?.audience ?? "");
+    setExtraNotes(initial?.extraNotes ?? "");
+  }, [initial?.voice, initial?.offer, initial?.cta, initial?.audience, initial?.extraNotes]);
 
   return (
     <form

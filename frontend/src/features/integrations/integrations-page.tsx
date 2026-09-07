@@ -18,6 +18,7 @@ import {
   fetchMetaSetup,
   saveMetaSetup,
   setInstagramAutonomy,
+  type InstagramStatus,
 } from "@/lib/api";
 
 export function IntegrationsPage() {
@@ -41,6 +42,8 @@ export function IntegrationsPage() {
   useEffect(() => {
     if (oauthResult === "connected") {
       void queryClient.invalidateQueries({ queryKey: ["instagram", organization?.id] });
+      void queryClient.invalidateQueries({ queryKey: ["instagram-brief", organization?.id] });
+      void queryClient.invalidateQueries({ queryKey: ["workspace", organization?.id] });
     }
   }, [oauthResult, organization?.id, queryClient]);
 
@@ -54,8 +57,8 @@ export function IntegrationsPage() {
         title="Integraciones"
         description="Conecta Instagram profesional con tu app de Meta. Las claves y tokens se cifran; el App Secret y los tokens no vuelven a la UI."
       />
-      {oauthResult === "connected" ? (
-        <p className="text-sm text-emerald-700 dark:text-emerald-400">Instagram conectado.</p>
+      {oauthResult === "connected" || status.data?.connected ? (
+        <ImportBanner status={status.data} oauthJustFinished={oauthResult === "connected"} />
       ) : null}
       {oauthResult === "error" ? (
         <p className="text-sm text-red-700 dark:text-red-400">No se pudo completar el OAuth de Instagram.</p>
@@ -311,6 +314,8 @@ function InstagramAccountPanel({
       setAccessToken("");
       onError(null);
       void queryClient.invalidateQueries({ queryKey: ["instagram", organizationId] });
+      void queryClient.invalidateQueries({ queryKey: ["instagram-brief", organizationId] });
+      void queryClient.invalidateQueries({ queryKey: ["workspace", organizationId] });
     },
     onError: (err) => onError(err instanceof ApiError ? err.message : "No se pudo guardar el token"),
   });
@@ -457,6 +462,8 @@ function DemoPanel({
     onSuccess: () => {
       onError(null);
       void queryClient.invalidateQueries({ queryKey: ["instagram", organizationId] });
+      void queryClient.invalidateQueries({ queryKey: ["instagram-brief", organizationId] });
+      void queryClient.invalidateQueries({ queryKey: ["workspace", organizationId] });
     },
     onError: (err) => onError(err instanceof ApiError ? err.message : "No se pudo conectar la demo"),
   });
@@ -496,6 +503,43 @@ function DemoPanel({
           </div>
         </div>
       ) : null}
+    </Panel>
+  );
+}
+
+function ImportBanner({
+  status,
+  oauthJustFinished,
+}: {
+  status?: InstagramStatus;
+  oauthJustFinished: boolean;
+}) {
+  if (!status?.connected) {
+    return oauthJustFinished ? (
+      <p className="text-sm text-emerald-700 dark:text-emerald-400">Instagram conectado.</p>
+    ) : null;
+  }
+  const fields = status.filledFromProfile ?? [];
+  return (
+    <Panel title="Perfil analizado">
+      <p className="mb-2">
+        {status.profileSummary ?? `Hemos leído @${status.username} y rellenado lo que el perfil deja claro.`}
+      </p>
+      {fields.length > 0 ? (
+        <p>
+          Campos: {fields.join(", ")}. Revisa Overview y el brief de Instagram; no inventamos métricas ni presupuesto.
+        </p>
+      ) : (
+        <p>No había huecos que rellenar: la empresa o el brief ya tenían datos.</p>
+      )}
+      <div className="mt-2 flex flex-wrap gap-3">
+        <Link className="text-zinc-900 underline dark:text-zinc-100" to="/overview">
+          Ver empresa
+        </Link>
+        <Link className="text-zinc-900 underline dark:text-zinc-100" to="/instagram">
+          Ver brief
+        </Link>
+      </div>
     </Panel>
   );
 }

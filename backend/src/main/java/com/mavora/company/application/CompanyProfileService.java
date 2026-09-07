@@ -151,6 +151,73 @@ public class CompanyProfileService {
         return goalRepository.findByOrganization(organizationId);
     }
 
+    @Transactional
+    public List<String> mergeFromInstagram(
+            OrganizationId organizationId,
+            String companyName,
+            String websiteUrl,
+            String description,
+            String market,
+            String productName,
+            String productDescription
+    ) {
+        Instant now = clock.instant();
+        List<String> filled = new ArrayList<>();
+        Company company = companyRepository.findByOrganization(organizationId).orElse(null);
+        if (company == null) {
+            String name = companyName == null || companyName.isBlank() ? "Marca" : companyName.trim();
+            if (name.length() < 2) {
+                name = "Marca";
+            }
+            company = companyRepository.save(Company.create(
+                    organizationId, name, websiteUrl, description, market, now
+            ));
+            filled.add("company.name");
+            if (websiteUrl != null && !websiteUrl.isBlank()) {
+                filled.add("company.websiteUrl");
+            }
+            if (description != null && !description.isBlank()) {
+                filled.add("company.description");
+            }
+            if (market != null && !market.isBlank()) {
+                filled.add("company.market");
+            }
+        } else {
+            filled.addAll(company.fillBlanks(websiteUrl, description, market, now));
+            companyRepository.save(company);
+        }
+        if (productRepository.findByCompany(company.id()).isEmpty()
+                && productName != null && !productName.isBlank()) {
+            productRepository.save(Product.create(
+                    organizationId, company.id(), productName, productDescription, websiteUrl, now
+            ));
+            filled.add("company.product");
+        }
+        return filled;
+    }
+
+    @Transactional
+    public void ingestWebsiteQuietly(OrganizationId organizationId) {
+        try {
+            Company company = companyRepository.findByOrganization(organizationId).orElse(null);
+            if (company == null || company.websiteUrl() == null) {
+                return;
+            }
+            FetchedPage page = websiteFetcher.fetch(company.websiteUrl());
+            knowledgeItemRepository.save(KnowledgeItem.create(
+                    organizationId,
+                    KnowledgeKind.FACT,
+                    page.title() == null || page.title().isBlank() ? "Website " + page.url() : page.title(),
+                    page.text(),
+                    page.url(),
+                    70,
+                    clock.instant()
+            ));
+        } catch (RuntimeException ignored) {
+            // Website is optional context. Instagram import must not fail because of it.
+        }
+    }
+
     private CompanyProfile toProfile(Company company) {
         return new CompanyProfile(company, productRepository.findByCompany(company.id()));
     }

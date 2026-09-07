@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, StatusBadge, euros } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
-import { OnboardingForm } from "@/features/overview/onboarding-form";
+import { GoalOnlyForm, OnboardingForm } from "@/features/overview/onboarding-form";
 import { useEnqueue, useWorkspace } from "@/lib/workspace";
 
 export function OverviewPage() {
@@ -24,7 +24,7 @@ export function OverviewPage() {
   }
 
   const data = workspace.data;
-  if (!data.company || !data.goal) {
+  if (!data.company) {
     return (
       <div>
         <PageHeader
@@ -32,6 +32,23 @@ export function OverviewPage() {
           description="El equipo de marketing necesita un producto, un mercado y un objetivo medible. No un chat vacío."
         />
         <OnboardingForm organizationId={organization.id} />
+      </div>
+    );
+  }
+  if (!data.goal) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Empresa leída del perfil"
+          description="Rellenamos lo que Instagram deja claro. El objetivo (métrica, fecha, presupuesto) lo pones tú: no lo inventamos."
+        />
+        <Panel title="Empresa">
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">{data.company.name}</p>
+          {data.company.description ? <p>{data.company.description}</p> : null}
+          <p>{data.company.market ?? "Mercado sin detallar"}</p>
+          {data.company.websiteUrl ? <p className="truncate">{data.company.websiteUrl}</p> : null}
+        </Panel>
+        <GoalOnlyForm organizationId={organization.id} defaultMarket={data.company.market} />
       </div>
     );
   }

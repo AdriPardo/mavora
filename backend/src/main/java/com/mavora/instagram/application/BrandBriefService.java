@@ -55,4 +55,46 @@ public class BrandBriefService {
                         organizationId, voice, offer, cta, audience, extraNotes, now
                 )));
     }
+
+    @Transactional
+    public java.util.List<String> mergeFromInstagram(
+            OrganizationId organizationId,
+            String voice,
+            String offer,
+            String cta,
+            String audience,
+            String extraNotes
+    ) {
+        Instant now = clock.instant();
+        return briefRepository.findByOrganization(organizationId)
+                .map(existing -> {
+                    java.util.List<String> filled = existing.fillBlanks(voice, offer, cta, audience, extraNotes, now);
+                    if (!filled.isEmpty()) {
+                        briefRepository.save(existing);
+                    }
+                    return filled;
+                })
+                .orElseGet(() -> {
+                    BrandBrief created = briefRepository.save(BrandBrief.create(
+                            organizationId, voice, offer, cta, audience, extraNotes, now
+                    ));
+                    java.util.List<String> filled = new java.util.ArrayList<>();
+                    if (created.voice() != null) {
+                        filled.add("brief.voice");
+                    }
+                    if (created.offer() != null) {
+                        filled.add("brief.offer");
+                    }
+                    if (created.cta() != null) {
+                        filled.add("brief.cta");
+                    }
+                    if (created.audience() != null) {
+                        filled.add("brief.audience");
+                    }
+                    if (created.extraNotes() != null) {
+                        filled.add("brief.extraNotes");
+                    }
+                    return filled;
+                });
+    }
 }
