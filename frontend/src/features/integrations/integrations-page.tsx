@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -520,23 +520,30 @@ function Field({
 
 function CopyField({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function copy() {
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {
+      /* sandbox browsers often block the clipboard API */
+    }
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+    input.focus();
+    input.select();
+    document.execCommand("copy");
+  }
 
   return (
     <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-      <Input readOnly value={value} aria-label={label} className="font-mono text-xs" />
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={async () => {
-          try {
-            await navigator.clipboard.writeText(value);
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 2000);
-          } catch {
-            setCopied(false);
-          }
-        }}
-      >
+      <Input ref={inputRef} readOnly value={value} aria-label={label} className="font-mono text-xs" />
+      <Button type="button" variant="secondary" onClick={() => void copy()}>
         {copied ? "Copiado" : "Copiar"}
       </Button>
     </div>
