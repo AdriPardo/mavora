@@ -1,0 +1,42 @@
+# Atlas project manifest (ADR-0014) — Mavora on shared Traefik host
+apiVersion: atlas/v1alpha1
+kind: Project
+
+metadata:
+  name: mavora
+
+runtime:
+  kind: compose
+  composeFile: docker-compose.atlas.yml
+  # Flyway runs inside Spring Boot on start — no migrateCommand.
+  #
+  # Atlas secrets — Project → Secrets:
+  #   MAVORA_CRYPTO_SECRET (required, ≥32 chars)
+  # Optional for real generation:
+  #   DEEPSEEK_API_KEY / LLM_API_KEY, FAL_KEY
+  #   LLM_PROVIDER=deepseek, FAL_PROVIDER=fal
+  #
+  # NOT here:
+  #   DOMAIN / POSTGRES_PASSWORD → .env.atlas.example seed
+  #   git.token / cloudflare.api.token → Atlas Org secrets
+  envFrom:
+    - secretRef: MAVORA_CRYPTO_SECRET
+    - secretRef: DEEPSEEK_API_KEY
+    - secretRef: LLM_API_KEY
+    - secretRef: FAL_KEY
+    - secretRef: LLM_PROVIDER
+    - secretRef: FAL_PROVIDER
+
+services:
+  api:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    expose:
+      port: 8080
+      protocol: http
+    health:
+      path: /actuator/health
+      intervalSeconds: 15
+    dependsOn:
+      - db

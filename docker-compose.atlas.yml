@@ -1,0 +1,104 @@
+# Shared Atlas / Traefik host (atlasops.dev). Mavora API + SPA.
+# Deploy: Atlas Autopilot (SHARED) → docker compose -f docker-compose.atlas.yml up -d --build
+#
+# .env seed (.env.atlas.example): DOMAIN, POSTGRES_PASSWORD
+# Atlas envFrom (atlas.yml): MAVORA_CRYPTO_SECRET (+ optional LLM/FAL keys)
+#
+# Do NOT name services postgres/redis/api on atlas-public (Docker DNS clash).
+
+name: mavora
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mavora
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mavora_change_me}
+      POSTGRES_DB: mavora
+    volumes:
+      - mavora_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mavora -d mavora"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - internal
+
+  api:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    environment:
+      SERVER_PORT: 8080
+      DATABASE_URL: jdbc:postgresql://db:5432/mavora
+      DATABASE_USERNAME: mavora
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-mavora_change_me}
+      CORS_ALLOWED_ORIGINS: https://${DOMAIN:-mavora.atlasops.dev}
+      COOKIE_SECURE: "true"
+      SESSION_TTL: 14d
+      PUBLIC_APP_URL: https://${DOMAIN:-mavora.atlasops.dev}
+      PUBLIC_API_URL: https://${DOMAIN:-mavora.atlasops.dev}
+      MAVORA_CRYPTO_SECRET: ${MAVORA_CRYPTO_SECRET:?set MAVORA_CRYPTO_SECRET via Atlas secrets / .env}
+      MAVORA_MEDIA_DIR: /app/data/media
+      LLM_PROVIDER: ${LLM_PROVIDER:-fake}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL_CMO: ${LLM_MODEL_CMO:-deepseek-v4-flash}
+      LLM_MONTHLY_BUDGET_CENTS: ${LLM_MONTHLY_BUDGET_CENTS:-2000}
+      FAL_PROVIDER: ${FAL_PROVIDER:-fake}
+      FAL_KEY: ${FAL_KEY:-}
+      INSTAGRAM_PROVIDER: ${INSTAGRAM_PROVIDER:-fake}
+      META_APP_ID: ${META_APP_ID:-}
+      META_APP_SECRET: ${META_APP_SECRET:-}
+      INSTAGRAM_REDIRECT_URI: https://${DOMAIN:-mavora.atlasops.dev}/api/v1/integrations/instagram/callback
+      API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
+    volumes:
+      - mavora_media:/app/data/media
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - internal
+      - atlas-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=atlas-public"
+      - "traefik.http.routers.mavora-api.rule=Host(`${DOMAIN:-mavora.atlasops.dev}`) && (PathPrefix(`/api`) || PathPrefix(`/actuator`) || PathPrefix(`/swagger-ui`) || PathPrefix(`/api-docs`) || PathPrefix(`/v3`))"
+      - "traefik.http.routers.mavora-api.entrypoints=websecure"
+      - "traefik.http.routers.mavora-api.tls=true"
+      - "traefik.http.routers.mavora-api.tls.certresolver=cloudflare"
+      - "traefik.http.routers.mavora-api.priority=100"
+      - "traefik.http.services.mavora-api.loadbalancer.server.port=8080"
+
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.web
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - internal
+      - atlas-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=atlas-public"
+      - "traefik.http.routers.mavora-web.rule=Host(`${DOMAIN:-mavora.atlasops.dev}`)"
+      - "traefik.http.routers.mavora-web.entrypoints=websecure"
+      - "traefik.http.routers.mavora-web.tls=true"
+      - "traefik.http.routers.mavora-web.tls.certresolver=cloudflare"
+      - "traefik.http.routers.mavora-web.priority=1"
+      - "traefik.http.services.mavora-web.loadbalancer.server.port=80"
+
+volumes:
+  mavora_pg_data:
+  mavora_media:
+
+networks:
+  internal:
+  atlas-public:
+    external: true
