@@ -19,7 +19,10 @@ mavora:
     poll-interval-ms: 60000
   llm:
     provider: fake
+    model-cmo: mavora-fake
     monthly-budget-cents: 5000
+  fal:
+    provider: fake
   crypto:
     secret: test-crypto-secret-please-change
   instagram:

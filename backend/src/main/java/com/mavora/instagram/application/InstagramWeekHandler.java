@@ -13,6 +13,7 @@ import com.mavora.company.domain.Company;
 import com.mavora.company.domain.CompanyRepository;
 import com.mavora.company.domain.Product;
 import com.mavora.company.domain.ProductRepository;
+import com.mavora.generation.application.MediaGenerator;
 import com.mavora.instagram.domain.BrandBrief;
 import com.mavora.instagram.domain.BrandBriefRepository;
 import com.mavora.instagram.domain.InstagramAccount;
@@ -23,10 +24,12 @@ import com.mavora.instagram.domain.InstagramSlot;
 import com.mavora.instagram.domain.InstagramSlotRepository;
 import com.mavora.instagram.domain.MediaAsset;
 import com.mavora.instagram.domain.MediaAssetRepository;
+import com.mavora.instagram.domain.MediaKind;
 import com.mavora.knowledge.domain.KnowledgeItem;
 import com.mavora.knowledge.domain.KnowledgeItemRepository;
 import com.mavora.knowledge.domain.KnowledgeKind;
 import com.mavora.shared.domain.DomainException;
+import com.mavora.shared.domain.OrganizationId;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -48,6 +51,8 @@ public class InstagramWeekHandler implements WorkflowHandler {
     private final InstagramSlotRepository slotRepository;
     private final KnowledgeItemRepository knowledgeItemRepository;
     private final InstagramPublishService publishService;
+    private final MediaLibraryService mediaLibraryService;
+    private final MediaGenerator mediaGenerator;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
@@ -60,6 +65,8 @@ public class InstagramWeekHandler implements WorkflowHandler {
             InstagramSlotRepository slotRepository,
             KnowledgeItemRepository knowledgeItemRepository,
             InstagramPublishService publishService,
+            MediaLibraryService mediaLibraryService,
+            MediaGenerator mediaGenerator,
             ObjectMapper objectMapper,
             Clock clock
     ) {
@@ -71,6 +78,8 @@ public class InstagramWeekHandler implements WorkflowHandler {
         this.slotRepository = slotRepository;
         this.knowledgeItemRepository = knowledgeItemRepository;
         this.publishService = publishService;
+        this.mediaLibraryService = mediaLibraryService;
+        this.mediaGenerator = mediaGenerator;
         this.objectMapper = objectMapper;
         this.clock = clock;
     }
@@ -89,19 +98,17 @@ public class InstagramWeekHandler implements WorkflowHandler {
                 .orElseThrow(() -> new DomainException("Connect Instagram before generating the week"));
         List<MediaAsset> assets = mediaAssetRepository.findByOrganization(execution.organizationId());
         List<MediaAsset> images = assets.stream().filter(MediaAsset::isImage).toList();
-        if (images.isEmpty()) {
-            throw new DomainException("Upload at least one photo so Mavora can compose the week");
-        }
         List<MediaAsset> videos = assets.stream().filter(MediaAsset::isVideo).toList();
         List<Product> products = productRepository.findByCompany(company.id());
         BrandBrief brief = briefRepository.findByOrganization(execution.organizationId()).orElse(null);
 
         String system = """
-                Eres el social lead de Instagram de Mavora. Devuelve JSON:
-                copies[{format,hook,caption,cta,hashtags[]}].
+                Eres el social lead de Instagram de Mavora. Devuelve JSON válido:
+                copies[{format,hook,caption,cta,hashtags[],visualPrompt}].
                 format ∈ FEED|REEL|STORY|CAROUSEL.
+                visualPrompt es una descripción en inglés para generar la imagen o el vídeo (Fal.ai).
                 Optimiza para el algoritmo (hook, retención, guardados, CTA de venta) sin prometer resultados.
-                Español de España. 3–8 hashtags de nicho. CTA hacia bio, DM u oferta.
+                Español de España para hook/caption/cta. 3–8 hashtags de nicho. CTA hacia bio, DM u oferta.
                 """.stripIndent();
         String user = buildPrompt(company, products, brief, assets, account.username());
         LlmCompletion completion = llm.complete(execution.organizationId(), AgentType.INSTAGRAM, system, user);
@@ -124,7 +131,15 @@ public class InstagramWeekHandler implements WorkflowHandler {
             }
             Instant scheduledAt = index == 0 ? now : when.toInstant();
             Copy copy = pickCopy(copies, blueprint.format(), index, company, brief);
-            List<UUID> mediaIds = assignMedia(blueprint.format(), images, videos, index);
+            List<UUID> mediaIds = visualsFor(
+                    execution.organizationId(),
+                    blueprint.format(),
+                    copy,
+                    brandContext(company, brief, products),
+                    images,
+                    videos,
+                    index
+            );
             created.add(slotRepository.save(InstagramSlot.schedule(
                     execution.organizationId(),
                     blueprint.format(),
@@ -226,7 +241,8 @@ public class InstagramWeekHandler implements WorkflowHandler {
                         node.path("hook").asText("Para si esto te suena."),
                         node.path("caption").asText("Publicamos para atraer visitas, seguidores y conversiones."),
                         node.path("cta").asText("Entra en el enlace de la bio."),
-                        tags
+                        tags,
+                        node.path("visualPrompt").asText("")
                 ));
             }
         } catch (Exception ignored) {
@@ -254,27 +270,101 @@ public class InstagramWeekHandler implements WorkflowHandler {
         };
         String caption = offer + " Lo diseñamos para el algoritmo: hook, ritmo y una sola llamada a la acción. "
                 + company.name() + " convierte atención en pipeline.";
-        return new Copy(format, hook, caption, cta, List.of("#" + slug(company.name()), "#marketing", "#pymes"));
+        return new Copy(
+                format,
+                hook,
+                caption,
+                cta,
+                List.of("#" + slug(company.name()), "#marketing", "#pymes"),
+                defaultVisual(format, company)
+        );
     }
 
-    private static List<UUID> assignMedia(
+    private List<UUID> visualsFor(
+            OrganizationId organizationId,
+            InstagramFormat format,
+            Copy copy,
+            String brandContext,
+            List<MediaAsset> images,
+            List<MediaAsset> videos,
+            int index
+    ) {
+        int count = format == InstagramFormat.CAROUSEL ? 2 : 1;
+        List<UUID> ids = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            String prompt = copy.visualPrompt();
+            if (prompt == null || prompt.isBlank()) {
+                prompt = defaultVisual(format, null);
+            }
+            if (i > 0) {
+                prompt = prompt + " Slide " + (i + 1) + ", complementary composition.";
+            }
+            MediaKind kind = format == InstagramFormat.REEL ? MediaKind.VIDEO : MediaKind.IMAGE;
+            String aspect = (format == InstagramFormat.STORY || format == InstagramFormat.REEL) ? "9:16" : "4:5";
+            try {
+                MediaGenerator.GeneratedMedia generated = mediaGenerator.generate(
+                        new MediaGenerator.GenerateCommand(kind, prompt, aspect, brandContext)
+                );
+                MediaAsset stored = mediaLibraryService.storeGenerated(
+                        organizationId,
+                        generated.kind(),
+                        generated.filename(),
+                        generated.contentType(),
+                        generated.bytes(),
+                        generated.prompt()
+                );
+                ids.add(stored.id());
+            } catch (RuntimeException exception) {
+                UUID fallback = fallbackAsset(format, images, videos, index + i);
+                if (fallback == null) {
+                    throw new DomainException("Could not generate or attach media for the Instagram week");
+                }
+                ids.add(fallback);
+            }
+        }
+        if (format == InstagramFormat.CAROUSEL && ids.size() == 1 && !images.isEmpty()) {
+            ids.add(images.get(index % images.size()).id());
+        }
+        return ids;
+    }
+
+    private static UUID fallbackAsset(
             InstagramFormat format,
             List<MediaAsset> images,
             List<MediaAsset> videos,
             int index
     ) {
         if (format == InstagramFormat.REEL && !videos.isEmpty()) {
-            return List.of(videos.get(index % videos.size()).id());
+            return videos.get(index % videos.size()).id();
         }
-        if (format == InstagramFormat.CAROUSEL) {
-            List<UUID> ids = new ArrayList<>();
-            int count = Math.min(4, Math.max(2, images.size()));
-            for (int i = 0; i < count; i++) {
-                ids.add(images.get((index + i) % images.size()).id());
-            }
-            return ids;
+        if (images.isEmpty()) {
+            return null;
         }
-        return List.of(images.get(index % images.size()).id());
+        return images.get(index % images.size()).id();
+    }
+
+    private static String brandContext(Company company, BrandBrief brief, List<Product> products) {
+        StringBuilder builder = new StringBuilder(company.name());
+        if (company.description() != null) {
+            builder.append(". ").append(company.description());
+        }
+        if (brief != null && brief.offer() != null) {
+            builder.append(". Offer: ").append(brief.offer());
+        }
+        for (Product product : products) {
+            builder.append(". Product ").append(product.name());
+        }
+        return builder.toString();
+    }
+
+    private static String defaultVisual(InstagramFormat format, Company company) {
+        String name = company == null ? "the brand" : company.name();
+        return switch (format) {
+            case REEL -> "Vertical 9:16 product reel, kinetic camera, clean UI screens, " + name + ", no watermark.";
+            case STORY -> "Vertical 9:16 Instagram story, bold typography space, lifestyle, " + name + ".";
+            case CAROUSEL -> "Portrait 4:5 carousel slide, educational layout, " + name + ", high contrast.";
+            case FEED -> "Portrait 4:5 Instagram feed photo, social proof, " + name + ", natural light.";
+        };
     }
 
     private static String normalizeHashtag(String raw) {
@@ -298,6 +388,13 @@ public class InstagramWeekHandler implements WorkflowHandler {
         return value == null ? "" : value;
     }
 
-    private record Copy(InstagramFormat format, String hook, String caption, String cta, List<String> hashtags) {
+    private record Copy(
+            InstagramFormat format,
+            String hook,
+            String caption,
+            String cta,
+            List<String> hashtags,
+            String visualPrompt
+    ) {
     }
 }

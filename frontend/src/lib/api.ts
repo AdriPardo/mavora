@@ -377,6 +377,8 @@ export type InstagramPlaybook = {
   timezone: string;
   principles: string;
   mix: Array<{ day: string; time: string; format: string }>;
+  llmProvider: string;
+  mediaProvider: string;
 };
 
 export function fetchInstagram(organizationId: string, signal?: AbortSignal): Promise<InstagramStatus> {

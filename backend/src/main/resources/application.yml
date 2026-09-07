@@ -68,12 +68,18 @@ mavora:
     cookie-secure: ${COOKIE_SECURE:false}
     cookie-same-site: Lax
   llm:
-    provider: ${LLM_PROVIDER:fake}
-    base-url: ${LLM_BASE_URL:https://api.openai.com/v1}
-    api-key: ${LLM_API_KEY:}
-    model-cmo: ${LLM_MODEL_CMO:mavora-fake}
+    provider: ${LLM_PROVIDER:deepseek}
+    base-url: ${LLM_BASE_URL:https://api.deepseek.com}
+    api-key: ${LLM_API_KEY:${DEEPSEEK_API_KEY:}}
+    model-cmo: ${LLM_MODEL_CMO:deepseek-v4-flash}
     monthly-budget-cents: ${LLM_MONTHLY_BUDGET_CENTS:2000}
-    timeout: 30s
+    timeout: 60s
+  fal:
+    provider: ${FAL_PROVIDER:fal}
+    api-key: ${FAL_KEY:}
+    image-model: ${FAL_IMAGE_MODEL:fal-ai/flux/schnell}
+    video-model: ${FAL_VIDEO_MODEL:fal-ai/wan-25-preview/text-to-video}
+    timeout: 180s
   jobs:
     inline: ${MAVORA_JOBS_INLINE:false}
     poll-interval-ms: 2000

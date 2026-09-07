@@ -100,6 +100,7 @@ export function InstagramPage() {
     mutationFn: () => generateInstagramWeek(organization!.id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["instagram-slots", organization?.id] });
+      void queryClient.invalidateQueries({ queryKey: ["instagram-media", organization?.id] });
       void queryClient.invalidateQueries({ queryKey: ["workspace", organization?.id] });
     },
   });
@@ -116,7 +117,7 @@ export function InstagramPage() {
     <div className="space-y-6">
       <PageHeader
         title="Instagram autónomo"
-        description="Mavora planifica y publica reels, historias, feed y carruseles a favor del algoritmo: visitas, seguidores y venta. Sin bandeja de aprobación."
+        description="DeepSeek escribe el copy. Fal.ai genera las imágenes y los reels. Mavora planifica y publica sin bandeja de aprobación."
       />
 
       {!connected ? (
@@ -129,6 +130,9 @@ export function InstagramPage() {
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge value={status.data?.autonomyEnabled ? "autónomo" : "pausado"} />
             <span>Zona {playbook.data?.timezone ?? "Europe/Madrid"}</span>
+            <span>
+              {playbook.data?.llmProvider ?? "deepseek"} + {playbook.data?.mediaProvider ?? "fal"}
+            </span>
             <Link className="underline" to="/integrations">
               Ajustar conexión
             </Link>
@@ -154,7 +158,10 @@ export function InstagramPage() {
       </Panel>
 
       <Panel title="Fotos y vídeos">
-        <p className="mb-3">JPEG/PNG o MP4. Instagram Graph exige JPEG público para fotos reales; en demo vale PNG.</p>
+        <p className="mb-3">
+          Opcional: fotos de producto como referencia. Fal.ai genera la pieza de cada slot (JPEG 4:5 o 9:16; MP4 para
+          reels).
+        </p>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
           <Input
             value={captionHint}
@@ -206,7 +213,7 @@ export function InstagramPage() {
         <h2 className="text-sm font-medium">Calendario de la semana</h2>
         <Button
           onClick={() => generate.mutate()}
-          disabled={!connected || generate.isPending || assets.length === 0}
+          disabled={!connected || generate.isPending}
         >
           {generate.isPending ? "Planificando…" : "Generar semana y publicar"}
         </Button>
@@ -220,7 +227,7 @@ export function InstagramPage() {
       {items.length === 0 ? (
         <EmptyState
           title="Sin piezas programadas"
-          description="Conecta la cuenta, sube fotos y genera la semana. Mavora mezcla reels, historias, feed y carruseles."
+          description="Conecta la cuenta y genera la semana. DeepSeek + Fal.ai crean copy y visuales; las fotos de marca solo afinan el contexto."
         />
       ) : (
         items.map((slot) => (

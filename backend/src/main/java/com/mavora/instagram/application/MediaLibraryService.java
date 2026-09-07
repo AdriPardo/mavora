@@ -98,6 +98,41 @@ public class MediaLibraryService {
     }
 
     @Transactional
+    public MediaAsset storeGenerated(
+            OrganizationId organizationId,
+            MediaKind kind,
+            String filename,
+            String contentType,
+            byte[] bytes,
+            String captionHint
+    ) {
+        if (bytes == null || bytes.length == 0) {
+            throw new IllegalArgumentException("generated file is empty");
+        }
+        long limit = kind == MediaKind.VIDEO ? Math.max(maxBytes, 32_000_000L) : maxBytes;
+        if (bytes.length > limit) {
+            throw new DomainException("The generated file exceeds the maximum size");
+        }
+        UUID assetId = UUID.randomUUID();
+        String safeName = sanitize(filename);
+        MediaStorage.StoredFile stored = mediaStorage.store(organizationId, assetId, safeName, contentType, bytes);
+        MediaAsset asset = MediaAsset.reconstitute(
+                assetId,
+                organizationId,
+                null,
+                kind,
+                safeName,
+                contentType,
+                stored.storagePath(),
+                stored.byteSize(),
+                captionHint,
+                clock.instant(),
+                0
+        );
+        return assetRepository.save(asset);
+    }
+
+    @Transactional
     public void delete(OrganizationId organizationId, UserId userId, UUID assetId) {
         authorizationService.requireWriter(organizationId, userId);
         MediaAsset asset = assetRepository.findById(assetId, organizationId)

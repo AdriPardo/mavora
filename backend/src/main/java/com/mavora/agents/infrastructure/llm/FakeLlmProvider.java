@@ -142,6 +142,7 @@ public class FakeLlmProvider implements LlmClient {
         node.put("caption", caption);
         node.put("cta", cta);
         node.set("hashtags", strings("#pymes", "#marketing", "#instagram", "#ventas"));
+        node.put("visualPrompt", "Clean Instagram visual for " + format + ", product-led, no watermark, high contrast.");
         return node;
     }
 

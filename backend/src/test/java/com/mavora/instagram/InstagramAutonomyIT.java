@@ -135,6 +135,22 @@ class InstagramAutonomyIT {
         assertThat(published).isGreaterThanOrEqualTo(1);
         assertThat(scheduled).isGreaterThanOrEqualTo(1);
 
+        ResponseEntity<String> media = client.get()
+                .uri(base + "/media")
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .toEntity(String.class);
+        assertThat(media.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(media.getBody()).contains("fal-");
+
+        JsonNode playbook = objectMapper.readTree(client.get()
+                .uri(base + "/instagram/playbook")
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .body(String.class));
+        assertThat(playbook.path("llmProvider").asText()).isEqualTo("fake");
+        assertThat(playbook.path("mediaProvider").asText()).isEqualTo("fake");
+
         ResponseEntity<String> approvals = client.get()
                 .uri(base + "/approvals")
                 .header(HttpHeaders.COOKIE, cookie)

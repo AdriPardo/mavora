@@ -24,7 +24,7 @@ Crea una cuenta en `/register`. La sesión viaja en cookie `mavora_session` (Htt
 
 Copia `.env.example` a `.env` si necesitas cambiar credenciales. No subas secretos.
 
-Por defecto el LLM es un proveedor **fake** determinista (`LLM_PROVIDER=fake`). Para un endpoint OpenAI-compatible: `LLM_PROVIDER=openai`, `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL_CMO`. El tope mensual de la org es duro (`LLM_MONTHLY_BUDGET_CENTS`).
+La generación real usa **DeepSeek** (copy, hooks, prompts) y **Fal.ai** (imágenes Flux Schnell y reels Wan 2.5). Variables: `DEEPSEEK_API_KEY` / `LLM_API_KEY`, `FAL_KEY`. Tests y CI siguen en `LLM_PROVIDER=fake` y `FAL_PROVIDER=fake`. Alternativa OpenAI-compatible: `LLM_PROVIDER=openai`. El tope mensual de la org es duro (`LLM_MONTHLY_BUDGET_CENTS`).
 
 Instagram arranca en `INSTAGRAM_PROVIDER=fake` (cuenta demo, publicación simulada). Para Graph real: app de Meta, cuenta **Professional** (Business/Creator) ligada a una Página, `INSTAGRAM_PROVIDER=meta`, `META_APP_ID`, `META_APP_SECRET`, `INSTAGRAM_REDIRECT_URI` pública y `PUBLIC_API_URL` alcanzable por los servidores de Meta (ellos descargan `image_url`/`video_url`). Los tokens se cifran con `MAVORA_CRYPTO_SECRET` y no se exponen en la API. No hay `scheduled_publish_time` nativo: Mavora guarda el calendario (zona Europe/Madrid) y publica al vencer el slot. El playbook optimiza hacia el algoritmo (hook, mix de formatos, CTA de venta); no promete resultados.
 
@@ -44,7 +44,7 @@ Los IT usan Testcontainers si Docker está disponible; si no, PostgreSQL en `loc
 3. Pedir estrategia al CMO → DRAFT + aprobación
 4. Aprobar → campaña + FACT/DECISION en knowledge
 5. Research, contenido (con aprobación), plan social (publicación manual) y analítica (snapshots → insight → learning)
-6. Integraciones → conectar Instagram → brief, fotos y «Generar semana»: autonomía total, sin bandeja de aprobación
+6. Integraciones → conectar Instagram → brief (fotos opcionales) y «Generar semana»: DeepSeek + Fal.ai, autonomía total, sin bandeja de aprobación
 
 ## API (núcleo)
 
