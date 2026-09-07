@@ -109,7 +109,7 @@ export function InstagramPage() {
   }
 
   const connected = status.data?.connected;
-  const items = slots.data?.items ?? [];
+  const items = (slots.data?.items ?? []).filter((slot) => slot.status !== "CANCELLED");
   const assets = media.data?.items ?? [];
 
   return (
