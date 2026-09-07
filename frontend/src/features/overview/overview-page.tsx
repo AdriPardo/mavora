@@ -86,6 +86,12 @@ export function OverviewPage() {
         </Panel>
         <Panel title="Pipeline de contenido">{data.contentCount} piezas</Panel>
         <Panel title="Campañas">{data.campaignCount} campañas</Panel>
+        <Panel title="Instagram">
+          <p>Reels, historias, feed y carruseles en piloto automático.</p>
+          <Link className="text-zinc-900 underline dark:text-zinc-100" to="/instagram">
+            Abrir calendario
+          </Link>
+        </Panel>
         <Panel title="Knowledge">{data.knowledgeCount} ítems en el Marketing Brain</Panel>
         <Panel title="Uso LLM">
           {euros(data.usage.spentCentsThisMonth, "USD")} de {euros(data.usage.monthlyBudgetCents, "USD")} este mes

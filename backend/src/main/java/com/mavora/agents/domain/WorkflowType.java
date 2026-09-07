@@ -5,5 +5,6 @@ public enum WorkflowType {
     MARKET_RESEARCH,
     CONTENT_CYCLE,
     SOCIAL_PLAN,
-    ANALYTICS_CYCLE
+    ANALYTICS_CYCLE,
+    INSTAGRAM_WEEK
 }

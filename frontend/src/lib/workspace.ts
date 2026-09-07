@@ -29,6 +29,8 @@ export function useEnqueue(organizationId: string | undefined) {
       void queryClient.invalidateQueries({ queryKey: ["approvals", organizationId] });
       void queryClient.invalidateQueries({ queryKey: ["runs", organizationId] });
       void queryClient.invalidateQueries({ queryKey: ["usage", organizationId] });
+      void queryClient.invalidateQueries({ queryKey: ["instagram", organizationId] });
+      void queryClient.invalidateQueries({ queryKey: ["instagram-slots", organizationId] });
     },
   });
 }

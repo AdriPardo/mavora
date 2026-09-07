@@ -20,3 +20,11 @@ mavora:
   llm:
     provider: fake
     monthly-budget-cents: 5000
+  crypto:
+    secret: test-crypto-secret-please-change
+  instagram:
+    provider: fake
+    publish-interval-ms: 60000
+  media:
+    directory: ${java.io.tmpdir}/mavora-media-test
+    max-bytes: 8388608

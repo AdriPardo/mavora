@@ -59,6 +59,14 @@ public class RestExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    ProblemDetail handleUpload(org.springframework.web.multipart.MaxUploadSizeExceededException exception) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problem.setTitle("File too large");
+        problem.setDetail("The uploaded file exceeds the allowed size");
+        return problem;
+    }
+
     private static String formatFieldError(FieldError error) {
         return error.getField() + ": " + error.getDefaultMessage();
     }

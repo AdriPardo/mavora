@@ -5,5 +5,6 @@ public enum AgentType {
     RESEARCHER,
     CONTENT,
     SOCIAL,
-    ANALYST
+    ANALYST,
+    INSTAGRAM
 }
