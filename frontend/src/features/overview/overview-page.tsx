@@ -104,7 +104,7 @@ export function OverviewPage() {
         <Panel title="Pipeline de contenido">{data.contentCount} piezas</Panel>
         <Panel title="Campañas">{data.campaignCount} campañas</Panel>
         <Panel title="Instagram">
-          <p>Reels, historias, feed y carruseles en piloto automático.</p>
+          <p>Copy, visuales y horario aunque Instagram no esté conectado. Tú decides si lo publicamos o lo subes a mano.</p>
           <Link className="text-zinc-900 underline dark:text-zinc-100" to="/instagram">
             Abrir calendario
           </Link>

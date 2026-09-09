@@ -168,6 +168,64 @@ class InstagramAutonomyIT {
         assertThat(foreign.getBody()).doesNotContain("ig_fake_");
     }
 
+    @Test
+    void generatesCopyAndScheduleWithoutInstagramConnection() throws Exception {
+        RestClient client = RegisteredOrg.restClient(port);
+        RegisteredOrg org = RegisteredOrg.register(client, objectMapper, "Manual Ig");
+        String cookie = org.cookie;
+        String base = "/api/v1/organizations/" + org.organizationId;
+
+        putCompany(client, cookie, base);
+        ResponseEntity<String> status = client.get()
+                .uri(base + "/instagram")
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .toEntity(String.class);
+        assertThat(status.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(objectMapper.readTree(status.getBody()).path("connected").asBoolean()).isFalse();
+
+        ResponseEntity<String> week = client.post()
+                .uri(base + "/instagram/week")
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .toEntity(String.class);
+        assertThat(week.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(week.getBody()).doesNotContain("token");
+        assertThat(week.getBody()).doesNotContain("cipher");
+
+        JsonNode workflow = objectMapper.readTree(client.get()
+                .uri(base + "/workflows/" + objectMapper.readTree(week.getBody()).path("id").asText())
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .body(String.class));
+        assertThat(workflow.path("status").asText()).isEqualTo("SUCCEEDED");
+        assertThat(workflow.path("errorMessage").isMissingNode()
+                || workflow.path("errorMessage").isNull()
+                || workflow.path("errorMessage").asText().isBlank()).isTrue();
+
+        ResponseEntity<String> slotsResponse = client.get()
+                .uri(base + "/instagram/slots")
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .toEntity(String.class);
+        assertThat(slotsResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(slotsResponse.getBody()).doesNotContain("token");
+        JsonNode slots = objectMapper.readTree(slotsResponse.getBody()).path("items");
+        assertThat(slots.size()).isGreaterThanOrEqualTo(8);
+        assertThat(slots.toString()).contains("REEL");
+        assertThat(slots.toString()).contains("STORY");
+        assertThat(slots.toString()).contains("FEED");
+        assertThat(slots.toString()).contains("CAROUSEL");
+        for (JsonNode slot : slots) {
+            assertThat(slot.path("status").asText()).isEqualTo("SCHEDULED");
+            assertThat(slot.path("hook").asText()).isNotBlank();
+            assertThat(slot.path("caption").asText()).isNotBlank();
+            assertThat(slot.path("cta").asText()).isNotBlank();
+            assertThat(slot.path("scheduledAt").asText()).isNotBlank();
+            assertThat(slot.path("igMediaId").asText()).isBlank();
+        }
+    }
+
     private static void putCompany(RestClient client, String cookie, String base) {
         ResponseEntity<String> created = client.put()
                 .uri(base + "/company")

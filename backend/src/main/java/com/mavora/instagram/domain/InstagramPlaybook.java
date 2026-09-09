@@ -1,8 +1,11 @@
 package com.mavora.instagram.domain;
 
 import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
@@ -45,6 +48,23 @@ public final class InstagramPlaybook {
                 new SlotBlueprint(DayOfWeek.SUNDAY, LocalTime.of(18, 0), InstagramFormat.STORY),
                 new SlotBlueprint(DayOfWeek.SUNDAY, LocalTime.of(19, 0), InstagramFormat.REEL)
         );
+    }
+
+    /**
+     * Horario Europe/Madrid del playbook. Si hay autonomía, la primera pieza
+     * se adelanta a {@code now} para publicarla en cuanto el plan está listo.
+     * Sin conexión, todas las piezas quedan en el mix semanal para subir a mano.
+     */
+    public static Instant scheduledAt(Instant now, SlotBlueprint blueprint, int index, boolean publishFirstNow) {
+        LocalDate start = now.atZone(ZONE).toLocalDate();
+        ZonedDateTime when = start.with(blueprint.day()).atTime(blueprint.time()).atZone(ZONE);
+        if (when.toInstant().isBefore(now) || when.toLocalDate().isBefore(start)) {
+            when = when.plusWeeks(1);
+        }
+        if (publishFirstNow && index == 0) {
+            return now;
+        }
+        return when.toInstant();
     }
 
     public record SlotBlueprint(DayOfWeek day, LocalTime time, InstagramFormat format) {
