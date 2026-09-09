@@ -95,6 +95,11 @@ public final class MediaAsset {
         return kind == MediaKind.VIDEO;
     }
 
+    /** Los generados por Fal/fake usan prefijo {@code fal-}. El resto son subidas del dueño. */
+    public boolean isGenerated() {
+        return filename.toLowerCase(java.util.Locale.ROOT).startsWith("fal-");
+    }
+
     private static String requireText(String value, String field, int min, int max) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(field + " is required");

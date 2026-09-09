@@ -100,6 +100,8 @@ class InstagramAutonomyIT {
         ResponseEntity<String> uploaded = uploadJpeg(client, cookie, base, "dashboard.jpg");
         assertThat(uploaded.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(uploaded.getBody()).contains("dashboard.jpg");
+        String uploadedId = objectMapper.readTree(uploaded.getBody()).path("id").asText();
+        assertThat(uploadedId).isNotBlank();
 
         ResponseEntity<String> week = client.post()
                 .uri(base + "/instagram/week")
@@ -142,6 +144,7 @@ class InstagramAutonomyIT {
                 .toEntity(String.class);
         assertThat(media.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(media.getBody()).contains("fal-");
+        assertThat(slotsResponse.getBody()).contains(uploadedId);
 
         JsonNode playbook = objectMapper.readTree(client.get()
                 .uri(base + "/instagram/playbook")
