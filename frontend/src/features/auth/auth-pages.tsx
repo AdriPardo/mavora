@@ -59,6 +59,11 @@ export function LoginPage() {
           Crear organización
         </Link>
       </p>
+      <p className="mt-3 text-sm text-zinc-500">
+        <Link className="font-medium text-zinc-900 dark:text-zinc-100" to="/privacidad">
+          Política de privacidad
+        </Link>
+      </p>
     </AuthScreen>
   );
 }
@@ -114,6 +119,11 @@ export function RegisterPage() {
         ¿Ya tienes cuenta?{" "}
         <Link className="font-medium text-zinc-900 dark:text-zinc-100" to="/login">
           Entrar
+        </Link>
+      </p>
+      <p className="mt-3 text-sm text-zinc-500">
+        <Link className="font-medium text-zinc-900 dark:text-zinc-100" to="/privacidad">
+          Política de privacidad
         </Link>
       </p>
     </AuthScreen>

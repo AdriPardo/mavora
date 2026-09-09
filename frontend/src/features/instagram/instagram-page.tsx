@@ -20,7 +20,10 @@ import {
   generateInstagramWeek,
   uploadMedia,
   upsertBrandBrief,
+  type InstagramSlot,
+  type MediaAsset,
 } from "@/lib/api";
+import { useWorkspace } from "@/lib/workspace";
 
 const FORMAT_LABEL: Record<string, string> = {
   REEL: "Reel",
@@ -36,6 +39,7 @@ export function InstagramPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [captionHint, setCaptionHint] = useState("");
 
+  const workspace = useWorkspace(organization?.id);
   const status = useQuery({
     queryKey: ["instagram", organization?.id],
     queryFn: ({ signal }) => fetchInstagram(organization!.id, signal),
@@ -109,22 +113,30 @@ export function InstagramPage() {
     return <Skeleton className="h-64 w-full" />;
   }
 
-  const connected = status.data?.connected;
+  const connected = Boolean(status.data?.connected);
+  const autonomy = Boolean(status.data?.autonomyEnabled);
+  const hasCompany = Boolean(workspace.data?.company);
   const items = (slots.data?.items ?? []).filter((slot) => slot.status !== "CANCELLED");
   const assets = media.data?.items ?? [];
+  const generateLabel = connected && autonomy ? "Generar semana y publicar" : "Generar semana (copy y horario)";
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Instagram autónomo"
-        description="DeepSeek escribe el copy. Fal.ai genera las imágenes y los reels. Mavora planifica y publica sin bandeja de aprobación."
+        title="Calendario de Instagram"
+        description="Copy, visual y hora de Madrid. Venta solo por DM o WhatsApp a 15 €. Colección 60K. El alcance y los seguidores se miden en Analítica, no se inventan aquí."
       />
 
       {!connected ? (
-        <EmptyState
-          title="Conecta Instagram"
-          description="Empieza en Integraciones. Solo cuentas profesionales. El token no se guarda en texto plano."
-        />
+        <Panel title="Sin cuenta de Instagram">
+          <p>
+            No pasa nada: generamos copy, visuales y el horario (hora de Madrid). Tú lo subes a mano. Cuando quieras
+            publicación automática, conecta la cuenta en Integraciones.
+          </p>
+          <Link className="mt-2 inline-block underline" to="/integrations">
+            Ir a Integraciones
+          </Link>
+        </Panel>
       ) : (
         <Panel title={`@${status.data?.username}`}>
           <div className="flex flex-wrap items-center gap-2">
@@ -147,10 +159,19 @@ export function InstagramPage() {
         </Panel>
       )}
 
+      {!hasCompany && !workspace.isPending ? (
+        <Panel title="Falta la empresa">
+          <p>Guarda la empresa en Overview (nombre y producto) para que el copy no salga vacío.</p>
+          <Link className="mt-2 inline-block underline" to="/">
+            Ir a Overview
+          </Link>
+        </Panel>
+      ) : null}
+
       <Panel title="Brief de marca">
         <p className="mb-3">
-          Al conectar Instagram rellenamos estos campos con la bio, la web y los captions. Revisa y corrige; no
-          inventamos métricas.
+          Opcional pero útil. Al conectar Instagram rellenamos estos campos con la bio, la web y los captions. Revisa y
+          corrige; no inventamos métricas.
         </p>
         <BriefForm
           initial={brief.data}
@@ -160,10 +181,10 @@ export function InstagramPage() {
         />
       </Panel>
 
-      <Panel title="Fotos y vídeos">
+      <Panel title="Logo y fotos de producto">
         <p className="mb-3">
-          Opcional: fotos de producto como referencia. Fal.ai genera la pieza de cada slot (JPEG 4:5 o 9:16; MP4 para
-          reels).
+          Sube el logo y fotos reales de la 60K (JPEG/PNG) o un reel (MP4). Si hay fotos vuestras, el calendario las usa.
+          Si no, generamos. Pista útil: sabor, logo o packshot.
         </p>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
           <Input
@@ -185,7 +206,7 @@ export function InstagramPage() {
         </div>
         {uploadError ? <p className="mb-2 text-red-700 dark:text-red-400">{uploadError}</p> : null}
         {assets.length === 0 ? (
-          <p>Sube al menos una foto para poder generar la semana.</p>
+          <p>Sin fotos propias: usaremos visuales generados.</p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {assets.map((asset) => (
@@ -196,7 +217,8 @@ export function InstagramPage() {
                   <p className="mb-2 text-xs uppercase">Vídeo</p>
                 )}
                 <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">{asset.filename}</p>
-                {asset.captionHint ? <p>{asset.captionHint}</p> : null}
+                <p>{asset.generated ? "Generada" : "Vuestra"}</p>
+                {asset.captionHint && !asset.generated ? <p>{asset.captionHint}</p> : null}
                 <Button
                   className="mt-2"
                   variant="ghost"
@@ -214,13 +236,19 @@ export function InstagramPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-medium">Calendario de la semana</h2>
-        <Button
-          onClick={() => generate.mutate()}
-          disabled={!connected || generate.isPending}
-        >
-          {generate.isPending ? "Planificando…" : "Generar semana y publicar"}
+        <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
+          {generate.isPending ? "Planificando…" : generateLabel}
         </Button>
       </div>
+      {items.length > 0 ? (
+        <p>
+          Pedido por DM o WhatsApp. 15 € la unidad. Solo 60K.{" "}
+          <Link className="underline" to="/analytics">
+            Registrar alcance y seguidores
+          </Link>
+          .
+        </p>
+      ) : null}
       {generate.error ? (
         <p className="text-red-700 dark:text-red-400">
           {generate.error instanceof ApiError ? generate.error.message : "No se pudo generar la semana"}
@@ -230,19 +258,11 @@ export function InstagramPage() {
       {items.length === 0 ? (
         <EmptyState
           title="Sin piezas programadas"
-          description="Conecta la cuenta y genera la semana. DeepSeek + Fal.ai crean copy y visuales; las fotos de marca solo afinan el contexto."
+          description="Genera la semana: copy, visual y la hora de Madrid en la que conviene subirlo. Conectar Instagram es opcional."
         />
       ) : (
         items.map((slot) => (
-          <Panel key={slot.id} title={`${FORMAT_LABEL[slot.format] ?? slot.format} · ${formatWhen(slot.scheduledAt)}`}>
-            <StatusBadge value={slot.status} />
-            <p className="mt-2 font-medium text-zinc-900 dark:text-zinc-100">{slot.hook}</p>
-            <p className="mt-1">{slot.caption}</p>
-            <p className="mt-1">{slot.cta}</p>
-            {slot.hashtags.length > 0 ? <p className="mt-1">{slot.hashtags.join(" ")}</p> : null}
-            {slot.igMediaId ? <p className="mt-1 text-xs">id {slot.igMediaId}</p> : null}
-            {slot.errorMessage ? <p className="mt-1 text-red-700 dark:text-red-400">{slot.errorMessage}</p> : null}
-          </Panel>
+          <SlotCard key={slot.id} slot={slot} assets={assets} connected={connected} autonomy={autonomy} />
         ))
       )}
 
@@ -255,8 +275,107 @@ export function InstagramPage() {
   );
 }
 
+function SlotCard({
+  slot,
+  assets,
+  connected,
+  autonomy,
+}: {
+  slot: InstagramSlot;
+  assets: MediaAsset[];
+  connected: boolean;
+  autonomy: boolean;
+}) {
+  const visuals = slot.mediaAssetIds
+    .map((id) => assets.find((asset) => asset.id === id))
+    .filter((asset): asset is MediaAsset => Boolean(asset));
+  const fullCopy = [slot.hook, slot.caption, slot.cta, slot.hashtags.join(" ")].filter(Boolean).join("\n\n");
+  const statusLabel =
+    slot.status === "SCHEDULED"
+      ? connected && autonomy
+        ? "programado"
+        : "súbelo a mano"
+      : slot.status.toLowerCase();
+
+  return (
+    <Panel title={`${FORMAT_LABEL[slot.format] ?? slot.format} · ${formatWhen(slot.scheduledAt)}`}>
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusBadge value={statusLabel} />
+      </div>
+      <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900">
+        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Cuándo subirlo</p>
+        <p className="text-base font-medium text-zinc-900 dark:text-zinc-100">{formatWhen(slot.scheduledAt)}</p>
+        <p className="text-xs">Hora de Madrid. {connected && autonomy ? "Mavora lo publica sola." : "Cópialo y súbelo tú en Instagram."}</p>
+      </div>
+      {visuals.length > 0 ? (
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          {visuals.map((asset) => (
+            <li key={asset.id}>
+              {asset.kind === "IMAGE" ? (
+                <img src={asset.url} alt={asset.filename} className="h-40 w-full rounded object-cover" />
+              ) : (
+                <p className="text-xs uppercase">Vídeo · {asset.filename}</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <p className="mt-3 font-medium text-zinc-900 dark:text-zinc-100">{slot.hook}</p>
+      <p className="mt-1 whitespace-pre-wrap">{slot.caption}</p>
+      <p className="mt-1">{slot.cta}</p>
+      {slot.hashtags.length > 0 ? <p className="mt-1">{slot.hashtags.join(" ")}</p> : null}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <CopyButton label="Copiar hook" value={slot.hook} />
+        <CopyButton label="Copiar copy" value={slot.caption} />
+        <CopyButton label="Copiar CTA" value={slot.cta} />
+        {slot.hashtags.length > 0 ? <CopyButton label="Copiar hashtags" value={slot.hashtags.join(" ")} /> : null}
+        <CopyButton label="Copiar pieza" value={fullCopy} />
+      </div>
+      {slot.igMediaId ? <p className="mt-1 text-xs">id {slot.igMediaId}</p> : null}
+      {slot.errorMessage ? <p className="mt-1 text-red-700 dark:text-red-400">{slot.errorMessage}</p> : null}
+    </Panel>
+  );
+}
+
+function CopyButton({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {
+      /* sandbox browsers often block the clipboard API */
+    }
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  }
+
+  return (
+    <Button type="button" variant="secondary" size="sm" onClick={() => void copy()}>
+      {copied ? "Copiado" : label}
+    </Button>
+  );
+}
+
 function formatWhen(iso: string): string {
-  return new Date(iso).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" });
+  return new Date(iso).toLocaleString("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Madrid",
+  });
 }
 
 function BriefForm({
@@ -308,7 +427,11 @@ function BriefForm({
     >
       <Input value={voice} onChange={(event) => setVoice(event.target.value)} placeholder="Voz de marca" />
       <Textarea value={offer} onChange={(event) => setOffer(event.target.value)} placeholder="Oferta y producto" />
-      <Input value={cta} onChange={(event) => setCta(event.target.value)} placeholder="CTA de venta (bio, DM, demo…)" />
+      <Input
+        value={cta}
+        onChange={(event) => setCta(event.target.value)}
+        placeholder="CTA de venta (DM o WhatsApp. 15 €. Solo +18.)"
+      />
       <Input value={audience} onChange={(event) => setAudience(event.target.value)} placeholder="Audiencia / ICP" />
       <Textarea
         value={extraNotes}

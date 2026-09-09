@@ -73,9 +73,8 @@ public class InstagramPublishService {
         InstagramSlot slot = claimed.get();
         InstagramAccount account = accountRepository.findByOrganization(slot.organizationId()).orElse(null);
         if (account == null || !account.canAutoPublish()) {
-            slot.markFailed("Instagram autonomy is off or the account is disconnected");
-            slotRepository.save(slot);
-            return true;
+            // Sin cuenta o sin autonomía: el calendario se queda para subir a mano.
+            return false;
         }
         try {
             slot.claimForPublish();

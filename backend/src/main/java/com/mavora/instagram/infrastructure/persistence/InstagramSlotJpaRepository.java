@@ -29,6 +29,14 @@ public interface InstagramSlotJpaRepository extends JpaRepository<InstagramSlotE
             select e from InstagramSlotEntity e
             where e.status = com.mavora.instagram.domain.InstagramSlotStatus.SCHEDULED
               and e.scheduledAt <= :now
+              and exists (
+                select 1 from InstagramAccountEntity a
+                where a.organizationId = e.organizationId
+                  and a.disconnectedAt is null
+                  and a.tokenCiphertext is not null
+                  and a.tokenCiphertext <> ''
+                  and a.autonomyEnabled = true
+              )
             order by e.scheduledAt asc
             """)
     List<InstagramSlotEntity> lockDue(Instant now, Pageable pageable);

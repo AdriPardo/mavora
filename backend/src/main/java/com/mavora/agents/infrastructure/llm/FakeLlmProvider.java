@@ -7,6 +7,7 @@ import com.mavora.agents.application.LlmClient;
 import com.mavora.agents.application.LlmCompletion;
 import com.mavora.agents.application.LlmRequest;
 import com.mavora.agents.domain.AgentType;
+import com.mavora.instagram.infrastructure.profile.VapeWaveProfile;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +33,7 @@ public class FakeLlmProvider implements LlmClient {
                     case RESEARCHER -> research(request.userPrompt());
                     case CONTENT -> content(request.userPrompt());
                     case SOCIAL -> social();
-                    case ANALYST -> analytics();
+                    case ANALYST -> analytics(request.userPrompt());
                     case INSTAGRAM -> instagram(request.userPrompt());
                 };
             }
@@ -107,6 +108,9 @@ public class FakeLlmProvider implements LlmClient {
 
     private String businessImport(String prompt) throws Exception {
         String username = extract(prompt, "Username:");
+        if (username.toLowerCase(java.util.Locale.ROOT).contains("vapewave")) {
+            return vapewaveImport();
+        }
         String name = extract(prompt, "Name:");
         String biography = extract(prompt, "Biography:");
         String website = extract(prompt, "Website:");
@@ -134,7 +138,26 @@ public class FakeLlmProvider implements LlmClient {
         return objectMapper.writeValueAsString(node);
     }
 
+    private String vapewaveImport() throws Exception {
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put("companyName", VapeWaveProfile.DISPLAY_NAME);
+        node.put("websiteUrl", "");
+        node.put("description", VapeWaveProfile.ABOUT);
+        node.put("market", VapeWaveProfile.MARKET);
+        node.put("productName", VapeWaveProfile.PRODUCT_NAME);
+        node.put("productDescription", VapeWaveProfile.PRODUCT_DESCRIPTION);
+        node.put("voice", VapeWaveProfile.VOICE);
+        node.put("offer", VapeWaveProfile.OFFER);
+        node.put("cta", VapeWaveProfile.CTA);
+        node.put("audience", VapeWaveProfile.AUDIENCE);
+        node.put("extraNotes", VapeWaveProfile.EXTRA_NOTES);
+        return objectMapper.writeValueAsString(node);
+    }
+
     private String instagram(String prompt) throws Exception {
+        if (prompt != null && prompt.toLowerCase(java.util.Locale.ROOT).contains("vapewave")) {
+            return vapewaveCopies();
+        }
         String company = extract(prompt, "Company:", "Empresa:");
         if (company.isBlank()) {
             company = "la marca";
@@ -169,6 +192,115 @@ public class FakeLlmProvider implements LlmClient {
         return objectMapper.writeValueAsString(node);
     }
 
+    private String vapewaveCopies() throws Exception {
+        ObjectNode node = objectMapper.createObjectNode();
+        ArrayNode copies = objectMapper.createArrayNode();
+        copies.add(igCopyVape(
+                "STORY",
+                "10 sabores. 15 €. Valencia.",
+                "Colección 60K de VapeWave. Pedidos por DM o WhatsApp. Solo adultos 18+. Sin tienda física, sin claims de salud.",
+                "DM o WhatsApp. 15 €. +18."
+        ));
+        copies.add(igCopyVape(
+                "FEED",
+                "THIS IS THE WAVE. THIS IS VAPEWAVE.",
+                "Valencia. Solo colección 60K, diez sabores, 15 €/ud. Pedidos por DM o WhatsApp. Síguenos si eres +18: medimos alcance y seguidores, no milagros de algoritmo.",
+                "Pedidos por DM o WhatsApp. 15 €. Solo +18."
+        ));
+        copies.add(igCopyVape(
+                "REEL",
+                "No es un milagro. Es un sabor a 15 €.",
+                "VapeWave · Valencia. Reel para que te encuentren (alcance). El pedido va por DM o WhatsApp. Recargable USB-C según ficha. Solo 60K.",
+                "DM o WhatsApp. +18."
+        ));
+        copies.add(igCopyVape(
+                "CAROUSEL",
+                "Guarda la carta: 15 €.",
+                "1) Solo colección 60K. 2) Diez sabores. 3) 15 €/ud. 4) DM o WhatsApp. 5) Solo +18. Sin envío prometido. Sin claims de salud.",
+                "Pide el sabor por DM o WhatsApp."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "¿Strawberry ice o watermelon blast?",
+                "15 €. Responde y te decimos stock. VapeWave Valencia. Adultos 18+.",
+                "Sabor por DM o WhatsApp."
+        ));
+        copies.add(igCopyVape(
+                "REEL",
+                "Triple grape. Vera VR22K.",
+                "Mesh coil, airflow, USB-C según el post. 15 €. Alcance sí, promesa de algoritmo no.",
+                "More info: DM o WhatsApp. +18."
+        ));
+        copies.add(igCopyVape(
+                "FEED",
+                "15 €. DM o WhatsApp.",
+                "VapeWave no tiene tienda a pie de calle. Solo 60K. Si eres mayor de edad, el siguiente paso es un mensaje. Síguenos para no perder los sabores.",
+                "DM o WhatsApp. 15 €. Solo +18."
+        ));
+        copies.add(igCopyVape(
+                "CAROUSEL",
+                "Cómo pedir en VapeWave.",
+                "1) Elige sabor. 2) Escríbenos por DM o WhatsApp. 3) 15 €/ud. 4) Solo 18+. 5) Solo colección 60K.",
+                "Empieza el mensaje por DM o WhatsApp con el sabor."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "Colección 60K. Diez sabores.",
+                "Si eres +18, el pedido es por DM o WhatsApp. 15 €. VapeWave no publica para menores.",
+                "DM o WhatsApp. +18."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "Grape ice + kiwi. 15 €.",
+                "Sabor de la 60K. Stock por mensaje. No hay otra línea de producto.",
+                "Escribe el sabor por DM o WhatsApp."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "THIS IS THE WAVE.",
+                "VapeWave · VLC. 15 €. Pedidos por DM o WhatsApp. Adultos 18+. Síguenos.",
+                "Pide por DM o WhatsApp."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "¿Repites sabor o pruebas otro?",
+                "Strawberry ice, watermelon blast, triple grape. 15 €. Solo +18.",
+                "Responde el sabor por DM o WhatsApp."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "Valencia. Sin tienda física.",
+                "El canal de venta es DM o WhatsApp. 15 € la 60K.",
+                "Abre DM o WhatsApp. +18."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "Solo adultos.",
+                "Si no tienes 18, esto no es para ti. Si sí: 60K, diez sabores, 15 €, VapeWave.",
+                "DM o WhatsApp si eres +18."
+        ));
+        copies.add(igCopyVape(
+                "FEED",
+                "Diez sabores. Una cuenta.",
+                "Colección 60K. 15 €. Valencia. Pedidos por DM o WhatsApp. El feed es para que nos sigas; el reel, para alcance. Sin cifras inventadas.",
+                "Pedidos por DM o WhatsApp. 15 €. Solo +18."
+        ));
+        copies.add(igCopyVape(
+                "REEL",
+                "USB-C. Mesh. 15 €.",
+                "Ficha del post, no un claim de salud. VapeWave Valencia. Solo 60K.",
+                "DM o WhatsApp. +18."
+        ));
+        copies.add(igCopyVape(
+                "REEL",
+                "Una misma ola. 60K.",
+                "Dispositivo, sabor, precio 15 €, CTA. Medimos alcance y seguidores. No prometemos el algoritmo.",
+                "Pide el sabor por DM o WhatsApp."
+        ));
+        node.set("copies", copies);
+        return objectMapper.writeValueAsString(node);
+    }
+
     private ObjectNode igCopy(String format, String hook, String caption, String cta) {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("format", format);
@@ -180,12 +312,45 @@ public class FakeLlmProvider implements LlmClient {
         return node;
     }
 
-    private String analytics() throws Exception {
+    private ObjectNode igCopyVape(String format, String hook, String caption, String cta) {
         ObjectNode node = objectMapper.createObjectNode();
-        node.put("insightTitle", "El canal con mejor señal es LinkedIn");
-        node.put("insightBody", "Los snapshots muestran más tracción relativa en LinkedIn que en el resto. Conviene doblar el pilar de educación práctica ahí.");
-        node.put("learningTitle", "Priorizar LinkedIn tras la primera medición");
-        node.put("learningBody", "Cuando hay pocos datos, concentrar el ritmo editorial en un canal reduce el ruido y acelera el aprendizaje.");
+        node.put("format", format);
+        node.put("hook", hook);
+        node.put("caption", caption);
+        node.put("cta", cta);
+        node.set("hashtags", strings("#VapeWave", "#VapeWaveVLC", "#Valencia", "#vapeo"));
+        node.put(
+                "visualPrompt",
+                "Adult-only product photo of a disposable vape, dark neon wave aesthetic, Valencia night, "
+                        + "no minors, no cartoons, no health claims, no watermark, " + format + " composition."
+        );
+        return node;
+    }
+
+    private String analytics(String prompt) throws Exception {
+        String lower = prompt == null ? "" : prompt.toLowerCase(java.util.Locale.ROOT);
+        boolean instagramKpis = lower.contains("alcance")
+                || lower.contains("seguidores")
+                || lower.contains("reach=")
+                || lower.contains("followers=");
+        ObjectNode node = objectMapper.createObjectNode();
+        if (instagramKpis) {
+            node.put("insightTitle", "Alcance y seguidores son las dos señales");
+            node.put(
+                    "insightBody",
+                    "Los snapshots de alcance y seguidores son la única evidencia. No se inventan cifras ni se promete el algoritmo. Relacionar reels con alcance y el ritmo de feed/historias con seguidores."
+            );
+            node.put("learningTitle", "Medir las dos métricas cada semana");
+            node.put(
+                    "learningBody",
+                    "Registrar alcance y seguidores a la vez evita optimizar solo una. El pedido sigue siendo DM o WhatsApp: el KPI de venta no está en el snapshot hasta que se anote."
+            );
+        } else {
+            node.put("insightTitle", "El canal con mejor señal es LinkedIn");
+            node.put("insightBody", "Los snapshots muestran más tracción relativa en LinkedIn que en el resto. Conviene doblar el pilar de educación práctica ahí.");
+            node.put("learningTitle", "Priorizar LinkedIn tras la primera medición");
+            node.put("learningBody", "Cuando hay pocos datos, concentrar el ritmo editorial en un canal reduce el ruido y acelera el aprendizaje.");
+        }
         return objectMapper.writeValueAsString(node);
     }
 

@@ -350,6 +350,8 @@ export type MetaSetup = {
   publicApiUrl: string;
   publicAppUrl: string;
   suggestedRedirectUri: string;
+  privacyPolicyUrl?: string;
+  appIconUrl?: string;
   scopes: string[];
   developerConsoleUrl: string;
 };
@@ -373,6 +375,7 @@ export type MediaAsset = {
   productId: string | null;
   url: string;
   createdAt: string;
+  generated?: boolean;
 };
 
 export type InstagramSlot = {
@@ -517,8 +520,35 @@ export function fetchInstagramPlaybook(organizationId: string, signal?: AbortSig
   return request(orgPath(organizationId, "/instagram/playbook"), { signal });
 }
 
-export function generateInstagramWeek(organizationId: string): Promise<Workflow> {
-  return request<Workflow>(orgPath(organizationId, "/instagram/week"), { method: "POST" });
+export function fetchWorkflow(
+  organizationId: string,
+  workflowId: string,
+  signal?: AbortSignal,
+): Promise<Workflow> {
+  return request<Workflow>(orgPath(organizationId, `/workflows/${workflowId}`), { signal });
+}
+
+export async function generateInstagramWeek(organizationId: string): Promise<Workflow> {
+  const queued = await request<Workflow>(orgPath(organizationId, "/instagram/week"), { method: "POST" });
+  for (let attempt = 0; attempt < 90; attempt++) {
+    const current = await fetchWorkflow(organizationId, queued.id);
+    if (current.status === "SUCCEEDED") {
+      return current;
+    }
+    if (current.status === "FAILED") {
+      throw new ApiError(
+        422,
+        "No se pudo generar la semana",
+        current.errorMessage ?? "La planificación falló",
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  throw new ApiError(
+    408,
+    "La planificación sigue en curso",
+    "Recarga en unos segundos para ver el calendario.",
+  );
 }
 
 export function recordSnapshot(

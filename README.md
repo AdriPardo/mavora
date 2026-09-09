@@ -28,6 +28,8 @@ La generación real usa **DeepSeek** (copy, hooks, prompts) y **Fal.ai** (imáge
 
 Instagram arranca en `INSTAGRAM_PROVIDER=fake` (cuenta demo, publicación simulada). Para Graph real: app de Meta, cuenta **Professional** (Business/Creator) ligada a una Página, `INSTAGRAM_PROVIDER=meta`, `META_APP_ID`, `META_APP_SECRET`, `INSTAGRAM_REDIRECT_URI` pública y `PUBLIC_API_URL` alcanzable por los servidores de Meta (ellos descargan `image_url`/`video_url`). Los tokens se cifran con `MAVORA_CRYPTO_SECRET` y no se exponen en la API. No hay `scheduled_publish_time` nativo: Mavora guarda el calendario (zona Europe/Madrid) y publica al vencer el slot. El playbook optimiza hacia el algoritmo (hook, mix de formatos, CTA de venta); no promete resultados.
 
+Para enviar la app de Meta a revisión (Ajustes básicos) hacen falta un **icono** (`frontend/public/meta-app-icon.png`, 1024×1024) y una **URL de privacidad pública HTTPS**. La ruta es `/privacidad` (también `/privacidad.html`); localhost no vale. Cuando el frontend esté publicado, pega `https://tu-dominio/privacidad` (o el valor `privacyPolicyUrl` de Integraciones si `PUBLIC_APP_URL` ya es ese dominio). No hay scraping ni login no oficial de Instagram.
+
 ## Tests
 
 ```bash
