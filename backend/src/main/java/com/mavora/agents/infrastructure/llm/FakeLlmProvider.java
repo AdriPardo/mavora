@@ -7,6 +7,7 @@ import com.mavora.agents.application.LlmClient;
 import com.mavora.agents.application.LlmCompletion;
 import com.mavora.agents.application.LlmRequest;
 import com.mavora.agents.domain.AgentType;
+import com.mavora.instagram.infrastructure.profile.VapeWaveProfile;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -107,6 +108,9 @@ public class FakeLlmProvider implements LlmClient {
 
     private String businessImport(String prompt) throws Exception {
         String username = extract(prompt, "Username:");
+        if (username.toLowerCase(java.util.Locale.ROOT).contains("vapewave")) {
+            return vapewaveImport();
+        }
         String name = extract(prompt, "Name:");
         String biography = extract(prompt, "Biography:");
         String website = extract(prompt, "Website:");
@@ -134,7 +138,26 @@ public class FakeLlmProvider implements LlmClient {
         return objectMapper.writeValueAsString(node);
     }
 
+    private String vapewaveImport() throws Exception {
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put("companyName", VapeWaveProfile.DISPLAY_NAME);
+        node.put("websiteUrl", "");
+        node.put("description", VapeWaveProfile.ABOUT);
+        node.put("market", VapeWaveProfile.MARKET);
+        node.put("productName", VapeWaveProfile.PRODUCT_NAME);
+        node.put("productDescription", VapeWaveProfile.PRODUCT_DESCRIPTION);
+        node.put("voice", VapeWaveProfile.VOICE);
+        node.put("offer", VapeWaveProfile.OFFER);
+        node.put("cta", VapeWaveProfile.CTA);
+        node.put("audience", VapeWaveProfile.AUDIENCE);
+        node.put("extraNotes", VapeWaveProfile.EXTRA_NOTES);
+        return objectMapper.writeValueAsString(node);
+    }
+
     private String instagram(String prompt) throws Exception {
+        if (prompt != null && prompt.toLowerCase(java.util.Locale.ROOT).contains("vapewave")) {
+            return vapewaveCopies();
+        }
         String company = extract(prompt, "Company:", "Empresa:");
         if (company.isBlank()) {
             company = "la marca";
@@ -169,6 +192,61 @@ public class FakeLlmProvider implements LlmClient {
         return objectMapper.writeValueAsString(node);
     }
 
+    private String vapewaveCopies() throws Exception {
+        ObjectNode node = objectMapper.createObjectNode();
+        ArrayNode copies = objectMapper.createArrayNode();
+        copies.add(igCopyVape(
+                "STORY",
+                "10 sabores. Una ola. Valencia.",
+                "Colección 60K de VapeWave. Pedidos por DM. Solo adultos 18+. Sin teatro, sin claims de salud: sabor y recambio.",
+                "Escríbenos por DM. +18."
+        ));
+        copies.add(igCopyVape(
+                "FEED",
+                "THIS IS THE WAVE. THIS IS VAPEWAVE.",
+                "Valencia. Colección 60K, diez sabores (strawberry ice, watermelon blast, triple grape, grape ice + kiwi). Pedidos por DM. Contenido para adultos.",
+                "Pedidos por DM. Solo +18."
+        ));
+        copies.add(igCopyVape(
+                "REEL",
+                "No es un milagro. Es un sabor.",
+                "VapeWave · Valencia. Enseña el dispositivo, el sabor, el CTA. Recargable USB-C según ficha. Pregunta precio y stock por DM.",
+                "DM para pedir. +18."
+        ));
+        copies.add(igCopyVape(
+                "CAROUSEL",
+                "Guarda la carta de sabores.",
+                "1) Colección 60K. 2) Diez sabores. 3) Pedidos por DM. 4) Solo +18. VapeWave no promete resultados de algoritmo ni beneficios de salud.",
+                "Pide por DM el sabor que quieres."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "¿Strawberry ice o watermelon blast?",
+                "Responde en este story y te decimos stock. VapeWave Valencia. Adultos 18+.",
+                "Responde el sabor por DM."
+        ));
+        copies.add(igCopyVape(
+                "REEL",
+                "Triple grape. Vera VR22K.",
+                "Lo que el perfil enseña: mesh coil, airflow, USB-C. Precio y envío: pregúntalo por DM, no lo inventamos en el copy.",
+                "More info: DM. +18."
+        ));
+        copies.add(igCopyVape(
+                "FEED",
+                "Pedidos por DM. Punto.",
+                "VapeWave no es un anuncio genérico de vapeo: es una cuenta de Valencia con colección 60K. Si eres mayor de edad y quieres sabor, el siguiente paso es un mensaje.",
+                "DM con el sabor. Solo +18."
+        ));
+        copies.add(igCopyVape(
+                "CAROUSEL",
+                "Cómo pedir en VapeWave.",
+                "1) Elige sabor. 2) Escríbenos por DM. 3) Confirmamos stock y precio. 4) Solo 18+. La oferta 2x30 € de algunos posts hay que confirmarla.",
+                "Empieza el DM con el sabor."
+        ));
+        node.set("copies", copies);
+        return objectMapper.writeValueAsString(node);
+    }
+
     private ObjectNode igCopy(String format, String hook, String caption, String cta) {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("format", format);
@@ -177,6 +255,21 @@ public class FakeLlmProvider implements LlmClient {
         node.put("cta", cta);
         node.set("hashtags", strings("#pymes", "#marketing", "#instagram", "#ventas"));
         node.put("visualPrompt", "Clean Instagram visual for " + format + ", product-led, no watermark, high contrast.");
+        return node;
+    }
+
+    private ObjectNode igCopyVape(String format, String hook, String caption, String cta) {
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put("format", format);
+        node.put("hook", hook);
+        node.put("caption", caption);
+        node.put("cta", cta);
+        node.set("hashtags", strings("#VapeWave", "#VapeWaveVLC", "#Valencia", "#vapeo"));
+        node.put(
+                "visualPrompt",
+                "Adult-only product photo of a disposable vape, dark neon wave aesthetic, Valencia night, "
+                        + "no minors, no cartoons, no health claims, no watermark, " + format + " composition."
+        );
         return node;
     }
 
