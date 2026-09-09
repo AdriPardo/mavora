@@ -18,9 +18,9 @@ public final class InstagramPlaybook {
 
     public static final String PRINCIPLES = """
             1. Hook en el primer segundo / primera línea: el feed decide en menos de un segundo.
-            2. Un objetivo por pieza: visita al perfil, seguimiento o venta (bio / DM / enlace).
+            2. Un objetivo por pieza: alcance, seguimiento o venta (DM / WhatsApp / bio).
             3. Reels para alcance; carruseles para guardados; historias para conversación diaria; feed para prueba social.
-            4. CTA explícito de conversión (oferta, demo, reserva, “escribe QUIERO”).
+            4. CTA explícito de conversión (DM, WhatsApp, oferta). No inventar precio ni canal.
             5. 3–8 hashtags de nicho, no 30 genéricos. Texto nativo, no watermark.
             6. Publicar cuando la audiencia ES está activa: mañana, mediodía y prime time nocturno.
             7. Ritmo constante supera picos aislados. Mavora ejecuta el calendario sin espera humana.

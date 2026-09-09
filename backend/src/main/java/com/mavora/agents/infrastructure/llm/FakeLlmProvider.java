@@ -33,7 +33,7 @@ public class FakeLlmProvider implements LlmClient {
                     case RESEARCHER -> research(request.userPrompt());
                     case CONTENT -> content(request.userPrompt());
                     case SOCIAL -> social();
-                    case ANALYST -> analytics();
+                    case ANALYST -> analytics(request.userPrompt());
                     case INSTAGRAM -> instagram(request.userPrompt());
                 };
             }
@@ -197,105 +197,105 @@ public class FakeLlmProvider implements LlmClient {
         ArrayNode copies = objectMapper.createArrayNode();
         copies.add(igCopyVape(
                 "STORY",
-                "10 sabores. Una ola. Valencia.",
-                "Colección 60K de VapeWave. Pedidos por DM. Solo adultos 18+. Sin teatro, sin claims de salud: sabor y recambio.",
-                "Escríbenos por DM. +18."
+                "10 sabores. 15 €. Valencia.",
+                "Colección 60K de VapeWave. Pedidos por DM o WhatsApp. Solo adultos 18+. Sin tienda física, sin claims de salud.",
+                "DM o WhatsApp. 15 €. +18."
         ));
         copies.add(igCopyVape(
                 "FEED",
                 "THIS IS THE WAVE. THIS IS VAPEWAVE.",
-                "Valencia. Colección 60K, diez sabores (strawberry ice, watermelon blast, triple grape, grape ice + kiwi). Pedidos por DM. Contenido para adultos.",
-                "Pedidos por DM. Solo +18."
+                "Valencia. Solo colección 60K, diez sabores, 15 €/ud. Pedidos por DM o WhatsApp. Síguenos si eres +18: medimos alcance y seguidores, no milagros de algoritmo.",
+                "Pedidos por DM o WhatsApp. 15 €. Solo +18."
         ));
         copies.add(igCopyVape(
                 "REEL",
-                "No es un milagro. Es un sabor.",
-                "VapeWave · Valencia. Enseña el dispositivo, el sabor, el CTA. Recargable USB-C según ficha. Pregunta precio y stock por DM.",
-                "DM para pedir. +18."
+                "No es un milagro. Es un sabor a 15 €.",
+                "VapeWave · Valencia. Reel para que te encuentren (alcance). El pedido va por DM o WhatsApp. Recargable USB-C según ficha. Solo 60K.",
+                "DM o WhatsApp. +18."
         ));
         copies.add(igCopyVape(
                 "CAROUSEL",
-                "Guarda la carta de sabores.",
-                "1) Colección 60K. 2) Diez sabores. 3) Pedidos por DM. 4) Solo +18. VapeWave no promete resultados de algoritmo ni beneficios de salud.",
-                "Pide por DM el sabor que quieres."
+                "Guarda la carta: 15 €.",
+                "1) Solo colección 60K. 2) Diez sabores. 3) 15 €/ud. 4) DM o WhatsApp. 5) Solo +18. Sin envío prometido. Sin claims de salud.",
+                "Pide el sabor por DM o WhatsApp."
         ));
         copies.add(igCopyVape(
                 "STORY",
                 "¿Strawberry ice o watermelon blast?",
-                "Responde en este story y te decimos stock. VapeWave Valencia. Adultos 18+.",
-                "Responde el sabor por DM."
+                "15 €. Responde y te decimos stock. VapeWave Valencia. Adultos 18+.",
+                "Sabor por DM o WhatsApp."
         ));
         copies.add(igCopyVape(
                 "REEL",
                 "Triple grape. Vera VR22K.",
-                "Lo que el perfil enseña: mesh coil, airflow, USB-C. Precio y envío: pregúntalo por DM, no lo inventamos en el copy.",
-                "More info: DM. +18."
+                "Mesh coil, airflow, USB-C según el post. 15 €. Alcance sí, promesa de algoritmo no.",
+                "More info: DM o WhatsApp. +18."
         ));
         copies.add(igCopyVape(
                 "FEED",
-                "Pedidos por DM. Punto.",
-                "VapeWave no es un anuncio genérico de vapeo: es una cuenta de Valencia con colección 60K. Si eres mayor de edad y quieres sabor, el siguiente paso es un mensaje.",
-                "DM con el sabor. Solo +18."
+                "15 €. DM o WhatsApp.",
+                "VapeWave no tiene tienda a pie de calle. Solo 60K. Si eres mayor de edad, el siguiente paso es un mensaje. Síguenos para no perder los sabores.",
+                "DM o WhatsApp. 15 €. Solo +18."
         ));
         copies.add(igCopyVape(
                 "CAROUSEL",
                 "Cómo pedir en VapeWave.",
-                "1) Elige sabor. 2) Escríbenos por DM. 3) Confirmamos stock y precio. 4) Solo 18+. La oferta 2x30 € de algunos posts hay que confirmarla.",
-                "Empieza el DM con el sabor."
+                "1) Elige sabor. 2) Escríbenos por DM o WhatsApp. 3) 15 €/ud. 4) Solo 18+. 5) Solo colección 60K.",
+                "Empieza el mensaje por DM o WhatsApp con el sabor."
         ));
         copies.add(igCopyVape(
                 "STORY",
                 "Colección 60K. Diez sabores.",
-                "Si eres mayor de edad y estás en Valencia, el siguiente paso es un DM. VapeWave no publica para menores.",
-                "DM. +18."
+                "Si eres +18, el pedido es por DM o WhatsApp. 15 €. VapeWave no publica para menores.",
+                "DM o WhatsApp. +18."
         ));
         copies.add(igCopyVape(
                 "STORY",
-                "Grape ice + kiwi.",
-                "Sabor citado en el perfil. Stock y precio: pregúntalo. No lo inventamos en el copy.",
-                "Escribe el sabor por DM."
+                "Grape ice + kiwi. 15 €.",
+                "Sabor de la 60K. Stock por mensaje. No hay otra línea de producto.",
+                "Escribe el sabor por DM o WhatsApp."
         ));
         copies.add(igCopyVape(
                 "STORY",
                 "THIS IS THE WAVE.",
-                "VapeWave · VLC. Pedidos por DM. Adultos 18+.",
-                "Pide por DM."
+                "VapeWave · VLC. 15 €. Pedidos por DM o WhatsApp. Adultos 18+. Síguenos.",
+                "Pide por DM o WhatsApp."
         ));
         copies.add(igCopyVape(
                 "STORY",
                 "¿Repites sabor o pruebas otro?",
-                "Strawberry ice, watermelon blast, triple grape. Tú eliges. Solo +18.",
-                "Responde el sabor."
+                "Strawberry ice, watermelon blast, triple grape. 15 €. Solo +18.",
+                "Responde el sabor por DM o WhatsApp."
         ));
         copies.add(igCopyVape(
                 "STORY",
-                "Valencia. Pedidos DM.",
-                "Sin dirección pública verificada: el canal de venta que sí está en el perfil es el DM.",
-                "Abre el DM. +18."
+                "Valencia. Sin tienda física.",
+                "El canal de venta es DM o WhatsApp. 15 € la 60K.",
+                "Abre DM o WhatsApp. +18."
         ));
         copies.add(igCopyVape(
                 "STORY",
                 "Solo adultos.",
-                "Si no tienes 18, esto no es para ti. Si sí: colección 60K, diez sabores, VapeWave.",
-                "DM si eres +18."
+                "Si no tienes 18, esto no es para ti. Si sí: 60K, diez sabores, 15 €, VapeWave.",
+                "DM o WhatsApp si eres +18."
         ));
         copies.add(igCopyVape(
                 "FEED",
                 "Diez sabores. Una cuenta.",
-                "VapeWave enseña producto, no milagros. Colección 60K. Valencia. Pedidos por DM. Contenido 18+.",
-                "Pedidos por DM. Solo +18."
+                "Colección 60K. 15 €. Valencia. Pedidos por DM o WhatsApp. El feed es para que nos sigas; el reel, para alcance. Sin cifras inventadas.",
+                "Pedidos por DM o WhatsApp. 15 €. Solo +18."
         ));
         copies.add(igCopyVape(
                 "REEL",
-                "USB-C. Mesh. Sabor.",
-                "Ficha del post, no un claim de salud. VapeWave Valencia. Pregunta precio por DM.",
-                "DM para stock. +18."
+                "USB-C. Mesh. 15 €.",
+                "Ficha del post, no un claim de salud. VapeWave Valencia. Solo 60K.",
+                "DM o WhatsApp. +18."
         ));
         copies.add(igCopyVape(
                 "REEL",
                 "Una misma ola. 60K.",
-                "Ritmo de producto: dispositivo, sabor, CTA. Sin menores, sin ‘deja el tabaco’, sin promesas de algoritmo.",
-                "Pide el sabor por DM."
+                "Dispositivo, sabor, precio 15 €, CTA. Medimos alcance y seguidores. No prometemos el algoritmo.",
+                "Pide el sabor por DM o WhatsApp."
         ));
         node.set("copies", copies);
         return objectMapper.writeValueAsString(node);
@@ -327,12 +327,30 @@ public class FakeLlmProvider implements LlmClient {
         return node;
     }
 
-    private String analytics() throws Exception {
+    private String analytics(String prompt) throws Exception {
+        String lower = prompt == null ? "" : prompt.toLowerCase(java.util.Locale.ROOT);
+        boolean instagramKpis = lower.contains("alcance")
+                || lower.contains("seguidores")
+                || lower.contains("reach=")
+                || lower.contains("followers=");
         ObjectNode node = objectMapper.createObjectNode();
-        node.put("insightTitle", "El canal con mejor señal es LinkedIn");
-        node.put("insightBody", "Los snapshots muestran más tracción relativa en LinkedIn que en el resto. Conviene doblar el pilar de educación práctica ahí.");
-        node.put("learningTitle", "Priorizar LinkedIn tras la primera medición");
-        node.put("learningBody", "Cuando hay pocos datos, concentrar el ritmo editorial en un canal reduce el ruido y acelera el aprendizaje.");
+        if (instagramKpis) {
+            node.put("insightTitle", "Alcance y seguidores son las dos señales");
+            node.put(
+                    "insightBody",
+                    "Los snapshots de alcance y seguidores son la única evidencia. No se inventan cifras ni se promete el algoritmo. Relacionar reels con alcance y el ritmo de feed/historias con seguidores."
+            );
+            node.put("learningTitle", "Medir las dos métricas cada semana");
+            node.put(
+                    "learningBody",
+                    "Registrar alcance y seguidores a la vez evita optimizar solo una. El pedido sigue siendo DM o WhatsApp: el KPI de venta no está en el snapshot hasta que se anote."
+            );
+        } else {
+            node.put("insightTitle", "El canal con mejor señal es LinkedIn");
+            node.put("insightBody", "Los snapshots muestran más tracción relativa en LinkedIn que en el resto. Conviene doblar el pilar de educación práctica ahí.");
+            node.put("learningTitle", "Priorizar LinkedIn tras la primera medición");
+            node.put("learningBody", "Cuando hay pocos datos, concentrar el ritmo editorial en un canal reduce el ruido y acelera el aprendizaje.");
+        }
         return objectMapper.writeValueAsString(node);
     }
 

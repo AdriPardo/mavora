@@ -127,9 +127,14 @@ class InstagramBusinessImportIT {
                 .retrieve()
                 .body(String.class));
         assertThat(brief.path("cta").asText()).contains("DM");
+        assertThat(brief.path("cta").asText()).contains("WhatsApp");
+        assertThat(brief.path("offer").asText()).contains("15");
         assertThat(brief.path("audience").asText()).contains("18");
         assertThat(brief.path("offer").asText()).doesNotContain("presupuesto");
-        assertThat(brief.path("extraNotes").asText()).contains("No inventamos");
+        assertThat(brief.path("extraNotes").asText()).contains("alcance");
+        assertThat(brief.path("extraNotes").asText()).contains("seguidores");
+        assertThat(brief.path("extraNotes").asText()).contains("WhatsApp");
+        assertThat(brief.path("extraNotes").asText()).doesNotContain("presupuesto de");
     }
 
     @Test

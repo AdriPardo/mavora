@@ -124,7 +124,7 @@ export function InstagramPage() {
     <div className="space-y-6">
       <PageHeader
         title="Calendario de Instagram"
-        description="DeepSeek escribe el copy. Fal.ai genera las imágenes y los reels. Si Instagram no está conectado, igual te dejamos el texto, el visual y cuándo subirlo."
+        description="Copy, visual y hora de Madrid. Venta solo por DM o WhatsApp a 15 €. Colección 60K. El alcance y los seguidores se miden en Analítica, no se inventan aquí."
       />
 
       {!connected ? (
@@ -239,6 +239,15 @@ export function InstagramPage() {
           {generate.isPending ? "Planificando…" : generateLabel}
         </Button>
       </div>
+      {items.length > 0 ? (
+        <p>
+          Pedido por DM o WhatsApp. 15 € la unidad. Solo 60K.{" "}
+          <Link className="underline" to="/analytics">
+            Registrar alcance y seguidores
+          </Link>
+          .
+        </p>
+      ) : null}
       {generate.error ? (
         <p className="text-red-700 dark:text-red-400">
           {generate.error instanceof ApiError ? generate.error.message : "No se pudo generar la semana"}
@@ -417,7 +426,11 @@ function BriefForm({
     >
       <Input value={voice} onChange={(event) => setVoice(event.target.value)} placeholder="Voz de marca" />
       <Textarea value={offer} onChange={(event) => setOffer(event.target.value)} placeholder="Oferta y producto" />
-      <Input value={cta} onChange={(event) => setCta(event.target.value)} placeholder="CTA de venta (bio, DM, demo…)" />
+      <Input
+        value={cta}
+        onChange={(event) => setCta(event.target.value)}
+        placeholder="CTA de venta (DM o WhatsApp. 15 €. Solo +18.)"
+      />
       <Input value={audience} onChange={(event) => setAudience(event.target.value)} placeholder="Audiencia / ICP" />
       <Textarea
         value={extraNotes}

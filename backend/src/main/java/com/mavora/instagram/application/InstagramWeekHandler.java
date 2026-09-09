@@ -108,7 +108,7 @@ public class InstagramWeekHandler implements WorkflowHandler {
                 format ∈ FEED|REEL|STORY|CAROUSEL.
                 visualPrompt es una descripción en inglés para generar la imagen o el vídeo (Fal.ai).
                 Optimiza para el algoritmo (hook, retención, guardados, CTA de venta) sin prometer resultados.
-                Español de España para hook/caption/cta. 3–8 hashtags de nicho. CTA hacia bio, DM u oferta.
+                Español de España para hook/caption/cta. 3–8 hashtags de nicho. CTA hacia DM, WhatsApp, bio u oferta según el brief. No inventar precio, envío ni métricas.
                 """.stripIndent();
         String user = buildPrompt(company, products, brief, assets, account);
         LlmCompletion completion = llm.complete(execution.organizationId(), AgentType.INSTAGRAM, system, user);

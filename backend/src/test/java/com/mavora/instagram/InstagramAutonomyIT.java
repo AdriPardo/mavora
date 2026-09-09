@@ -224,6 +224,78 @@ class InstagramAutonomyIT {
         }
     }
 
+    @Test
+    void vapewaveWeekCopySellsOnlyViaDmOrWhatsAppAt15() throws Exception {
+        RestClient client = RegisteredOrg.restClient(port);
+        RegisteredOrg org = RegisteredOrg.register(client, objectMapper, "VapeWave Copy");
+        String cookie = org.cookie;
+        String base = "/api/v1/organizations/" + org.organizationId;
+
+        ResponseEntity<String> created = client.put()
+                .uri(base + "/company")
+                .header(HttpHeaders.COOKIE, cookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "name":"VapeWave",
+                          "description":"Solo colección 60K. 15 €/ud. Pedidos por DM o WhatsApp.",
+                          "market":"Vapeo · Valencia (VLC)",
+                          "products":[{"name":"Colección 60K","description":"Diez sabores. 15 €. DM o WhatsApp."}]
+                        }
+                        """)
+                .retrieve()
+                .toEntity(String.class);
+        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        client.put()
+                .uri(base + "/instagram/brief")
+                .header(HttpHeaders.COOKIE, cookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "voice":"THIS IS THE WAVE. THIS IS VAPEWAVE.",
+                          "offer":"Colección 60K · 10 sabores · 15 €/ud. Pedidos por DM o WhatsApp.",
+                          "cta":"Pedidos por DM o WhatsApp. 15 €. Solo +18.",
+                          "audience":"Adultos 18+ en Valencia.",
+                          "extraNotes":"KPIs: alcance y seguidores. Sin cifra ni presupuesto."
+                        }
+                        """)
+                .retrieve()
+                .toEntity(String.class);
+
+        ResponseEntity<String> week = client.post()
+                .uri(base + "/instagram/week")
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .toEntity(String.class);
+        assertThat(week.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+
+        JsonNode workflow = objectMapper.readTree(client.get()
+                .uri(base + "/workflows/" + objectMapper.readTree(week.getBody()).path("id").asText())
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .body(String.class));
+        assertThat(workflow.path("status").asText()).isEqualTo("SUCCEEDED");
+
+        JsonNode slots = objectMapper.readTree(client.get()
+                .uri(base + "/instagram/slots")
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .body(String.class)).path("items");
+        assertThat(slots.size()).isGreaterThanOrEqualTo(8);
+        String all = slots.toString();
+        assertThat(all).contains("WhatsApp");
+        assertThat(all).contains("15");
+        assertThat(all).contains("60K");
+        assertThat(all).doesNotContain("enlace de la bio");
+        assertThat(all).doesNotContain("presupuesto");
+        for (JsonNode slot : slots) {
+            assertThat(slot.path("status").asText()).isEqualTo("SCHEDULED");
+            assertThat(slot.path("cta").asText()).containsIgnoringCase("DM");
+            assertThat(slot.path("igMediaId").asText(null)).isNull();
+        }
+    }
+
     private static void putCompany(RestClient client, String cookie, String base) {
         ResponseEntity<String> created = client.put()
                 .uri(base + "/company")

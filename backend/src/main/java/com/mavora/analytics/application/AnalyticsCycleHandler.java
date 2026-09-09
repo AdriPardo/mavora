@@ -64,9 +64,16 @@ public class AnalyticsCycleHandler implements WorkflowHandler {
         String snapshotText = snapshots.stream()
                 .map(item -> item.metric() + "=" + item.value() + " @" + item.capturedAt())
                 .collect(Collectors.joining("\n"));
-        String system = "Eres analyst de Mavora. JSON: insightTitle, insightBody, learningTitle, learningBody. No inventes cifras que no estén en los snapshots.";
+        String knowledgeText = knowledgeItemRepository.findRecent(execution.organizationId(), 12).stream()
+                .map(item -> item.title() + ": " + item.body())
+                .collect(Collectors.joining("\n"));
+        String system = "Eres analyst de Mavora. JSON: insightTitle, insightBody, learningTitle, learningBody. No inventes cifras que no estén en los snapshots. Si el brief pide alcance y seguidores, habla de esas dos métricas.";
+        String user = "Snapshots:\n" + snapshotText;
+        if (!knowledgeText.isBlank()) {
+            user = user + "\nKnowledge:\n" + knowledgeText;
+        }
         LlmCompletion completion = llm.complete(
-                execution.organizationId(), AgentType.ANALYST, system, "Snapshots:\n" + snapshotText
+                execution.organizationId(), AgentType.ANALYST, system, user
         );
         try {
             JsonNode node = objectMapper.readTree(completion.content());
