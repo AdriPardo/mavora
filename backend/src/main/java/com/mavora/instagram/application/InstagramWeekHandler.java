@@ -32,8 +32,6 @@ import com.mavora.shared.domain.DomainException;
 import com.mavora.shared.domain.OrganizationId;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -92,10 +90,12 @@ public class InstagramWeekHandler implements WorkflowHandler {
     @Override
     public HandlerResult execute(WorkflowExecution execution, LlmGateway llm) {
         Company company = companyRepository.findByOrganization(execution.organizationId())
-                .orElseThrow(() -> new DomainException("Connect the company before planning Instagram"));
+                .orElseThrow(() -> new DomainException(
+                        "Guarda la empresa en Overview antes de generar el calendario de Instagram"));
         InstagramAccount account = accountRepository.findByOrganization(execution.organizationId())
                 .filter(InstagramAccount::isConnected)
-                .orElseThrow(() -> new DomainException("Connect Instagram before generating the week"));
+                .orElse(null);
+        boolean autoPublish = account != null && account.canAutoPublish();
         List<MediaAsset> assets = mediaAssetRepository.findByOrganization(execution.organizationId());
         List<MediaAsset> images = assets.stream().filter(MediaAsset::isImage).toList();
         List<MediaAsset> videos = assets.stream().filter(MediaAsset::isVideo).toList();
@@ -110,7 +110,7 @@ public class InstagramWeekHandler implements WorkflowHandler {
                 Optimiza para el algoritmo (hook, retención, guardados, CTA de venta) sin prometer resultados.
                 Español de España para hook/caption/cta. 3–8 hashtags de nicho. CTA hacia bio, DM u oferta.
                 """.stripIndent();
-        String user = buildPrompt(company, products, brief, assets, account.username());
+        String user = buildPrompt(company, products, brief, assets, account);
         LlmCompletion completion = llm.complete(execution.organizationId(), AgentType.INSTAGRAM, system, user);
 
         slotRepository.findScheduled(execution.organizationId()).forEach(slot -> {
@@ -120,16 +120,10 @@ public class InstagramWeekHandler implements WorkflowHandler {
 
         List<Copy> copies = parseCopies(completion.content());
         Instant now = clock.instant();
-        ZonedDateTime madrid = now.atZone(InstagramPlaybook.ZONE);
-        LocalDate start = madrid.toLocalDate();
         List<InstagramSlot> created = new ArrayList<>();
         int index = 0;
         for (var blueprint : InstagramPlaybook.weekMix()) {
-            ZonedDateTime when = start.with(blueprint.day()).atTime(blueprint.time()).atZone(InstagramPlaybook.ZONE);
-            if (when.toInstant().isBefore(now) || when.toLocalDate().isBefore(start)) {
-                when = when.plusWeeks(1);
-            }
-            Instant scheduledAt = index == 0 ? now : when.toInstant();
+            Instant scheduledAt = InstagramPlaybook.scheduledAt(now, blueprint, index, autoPublish);
             Copy copy = pickCopy(copies, blueprint.format(), index, company, brief);
             List<UUID> mediaIds = visualsFor(
                     execution.organizationId(),
@@ -157,27 +151,28 @@ public class InstagramWeekHandler implements WorkflowHandler {
         knowledgeItemRepository.save(KnowledgeItem.create(
                 execution.organizationId(),
                 KnowledgeKind.DECISION,
-                "Calendario Instagram autónomo",
-                created.size() + " piezas planificadas para @" + account.username()
-                        + " (reels, historias, feed y carruseles) sin aprobación humana. "
-                        + InstagramPlaybook.PRINCIPLES,
+                autoPublish ? "Calendario Instagram autónomo" : "Calendario Instagram para subir a mano",
+                knowledgeBody(created.size(), account, autoPublish),
                 "instagram-week",
                 80,
                 now
         ));
 
-        if (account.canAutoPublish()) {
+        if (autoPublish) {
             publishService.processDue();
         }
 
         try {
-            return HandlerResult.of(
-                    objectMapper.writeValueAsString(objectMapper.createObjectNode()
-                            .put("slots", created.size())
-                            .put("username", account.username())
-                            .put("autonomy", account.canAutoPublish())),
-                    completion
-            );
+            var output = objectMapper.createObjectNode()
+                    .put("slots", created.size())
+                    .put("autonomy", autoPublish)
+                    .put("manualPublish", !autoPublish);
+            if (account != null) {
+                output.put("username", account.username());
+            } else {
+                output.putNull("username");
+            }
+            return HandlerResult.of(objectMapper.writeValueAsString(output), completion);
         } catch (Exception exception) {
             throw new DomainException("Could not serialize Instagram week output");
         }
@@ -188,7 +183,7 @@ public class InstagramWeekHandler implements WorkflowHandler {
             List<Product> products,
             BrandBrief brief,
             List<MediaAsset> assets,
-            String username
+            InstagramAccount account
     ) {
         StringBuilder builder = new StringBuilder();
         builder.append("Company: ").append(company.name()).append('\n');
@@ -199,7 +194,12 @@ public class InstagramWeekHandler implements WorkflowHandler {
         if (company.market() != null) {
             builder.append("Market: ").append(company.market()).append('\n');
         }
-        builder.append("Instagram: @").append(username).append('\n');
+        if (account != null) {
+            builder.append("Instagram: @").append(account.username()).append('\n');
+        } else {
+            builder.append("Instagram: sin cuenta conectada. Plan para que el usuario suba a mano.\n");
+            builder.append("Marca: ").append(company.name()).append('\n');
+        }
         if (brief != null) {
             builder.append("Voice: ").append(nullToEmpty(brief.voice())).append('\n');
             builder.append("Offer: ").append(nullToEmpty(brief.offer())).append('\n');
@@ -341,6 +341,18 @@ public class InstagramWeekHandler implements WorkflowHandler {
             return null;
         }
         return images.get(index % images.size()).id();
+    }
+
+    private static String knowledgeBody(int slots, InstagramAccount account, boolean autoPublish) {
+        if (autoPublish) {
+            return slots + " piezas planificadas para @" + account.username()
+                    + " (reels, historias, feed y carruseles) sin aprobación humana. "
+                    + InstagramPlaybook.PRINCIPLES;
+        }
+        String who = account != null ? "@" + account.username() : "la marca";
+        return slots + " piezas con copy, visual y horario para " + who
+                + ". Sin publicación automática: el usuario las sube a mano en Instagram. "
+                + InstagramPlaybook.PRINCIPLES;
     }
 
     private static String brandContext(Company company, BrandBrief brief, List<Product> products) {
