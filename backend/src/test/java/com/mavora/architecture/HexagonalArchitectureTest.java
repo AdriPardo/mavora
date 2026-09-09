@@ -41,4 +41,16 @@ class HexagonalArchitectureTest {
                     "org.hibernate.."
             )
             .because("controllers must not use JPA entities or repositories directly");
+
+    @ArchTest
+    static final ArchRule applicationMustNotDependOnInfrastructure = noClasses()
+            .that().resideInAPackage("..application..")
+            .should().dependOnClassesThat().resideInAPackage("..infrastructure..")
+            .because("use cases depend on ports, not adapters");
+
+    @ArchTest
+    static final ArchRule identityDomainMustNotDependOnOrganization = noClasses()
+            .that().resideInAPackage("com.mavora.identity.domain..")
+            .should().dependOnClassesThat().resideInAPackage("com.mavora.organization..")
+            .because("identity domain stays independent of tenancy internals");
 }

@@ -1,11 +1,13 @@
 package com.mavora.shared.infrastructure.config;
 
+import com.mavora.identity.infrastructure.security.SessionAuthenticationFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -31,10 +35,12 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             CorsConfigurationSource corsConfigurationSource,
-            AuthenticationEntryPoint problemDetailsAuthenticationEntryPoint
+            AuthenticationEntryPoint problemDetailsAuthenticationEntryPoint,
+            AccessDeniedHandler problemDetailsAccessDeniedHandler,
+            ObjectProvider<SessionAuthenticationFilter> sessionAuthenticationFilter
     ) throws Exception {
         http
-                // Cookie sessions (identity slice) will replace this with CSRF or SameSite cookies.
+                // SPA + SameSite=Lax cookie. Mutating requests with a foreign Origin are rejected.
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -49,6 +55,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/v1/health",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/logout",
                                 "/actuator/health",
                                 "/actuator/health/**",
                                 "/actuator/info",
@@ -61,7 +70,11 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(problemDetailsAuthenticationEntryPoint)
+                        .accessDeniedHandler(problemDetailsAccessDeniedHandler)
                 );
+        sessionAuthenticationFilter.ifAvailable(filter ->
+                http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
+        );
         return http.build();
     }
 
@@ -77,7 +90,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Request-Id", "Idempotency-Key"));
-        configuration.setExposedHeaders(List.of("X-Request-Id"));
+        configuration.setExposedHeaders(List.of("X-Request-Id", "Set-Cookie"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
@@ -89,14 +102,29 @@ public class SecurityConfig {
     @Bean
     AuthenticationEntryPoint problemDetailsAuthenticationEntryPoint(ObjectMapper objectMapper) {
         return (HttpServletRequest request, HttpServletResponse response, org.springframework.security.core.AuthenticationException exception)
-                -> writeUnauthorized(response, objectMapper);
+                -> writeProblem(response, objectMapper, HttpStatus.UNAUTHORIZED, "Unauthorized", "Authentication is required");
     }
 
-    private static void writeUnauthorized(HttpServletResponse response, ObjectMapper objectMapper) throws IOException {
-        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
-        problem.setTitle("Unauthorized");
-        problem.setDetail("Authentication is required");
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+    @Bean
+    AccessDeniedHandler problemDetailsAccessDeniedHandler(ObjectMapper objectMapper) {
+        return (request, response, exception) ->
+                writeProblem(response, objectMapper, HttpStatus.FORBIDDEN, "Forbidden", "You cannot perform this action");
+    }
+
+    private static void writeProblem(
+            HttpServletResponse response,
+            ObjectMapper objectMapper,
+            HttpStatus status,
+            String title,
+            String detail
+    ) throws IOException {
+        if (response.isCommitted()) {
+            return;
+        }
+        ProblemDetail problem = ProblemDetail.forStatus(status);
+        problem.setTitle(title);
+        problem.setDetail(detail);
+        response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         objectMapper.writeValue(response.getOutputStream(), problem);
