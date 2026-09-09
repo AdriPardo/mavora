@@ -243,6 +243,60 @@ public class FakeLlmProvider implements LlmClient {
                 "1) Elige sabor. 2) Escríbenos por DM. 3) Confirmamos stock y precio. 4) Solo 18+. La oferta 2x30 € de algunos posts hay que confirmarla.",
                 "Empieza el DM con el sabor."
         ));
+        copies.add(igCopyVape(
+                "STORY",
+                "Colección 60K. Diez sabores.",
+                "Si eres mayor de edad y estás en Valencia, el siguiente paso es un DM. VapeWave no publica para menores.",
+                "DM. +18."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "Grape ice + kiwi.",
+                "Sabor citado en el perfil. Stock y precio: pregúntalo. No lo inventamos en el copy.",
+                "Escribe el sabor por DM."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "THIS IS THE WAVE.",
+                "VapeWave · VLC. Pedidos por DM. Adultos 18+.",
+                "Pide por DM."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "¿Repites sabor o pruebas otro?",
+                "Strawberry ice, watermelon blast, triple grape. Tú eliges. Solo +18.",
+                "Responde el sabor."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "Valencia. Pedidos DM.",
+                "Sin dirección pública verificada: el canal de venta que sí está en el perfil es el DM.",
+                "Abre el DM. +18."
+        ));
+        copies.add(igCopyVape(
+                "STORY",
+                "Solo adultos.",
+                "Si no tienes 18, esto no es para ti. Si sí: colección 60K, diez sabores, VapeWave.",
+                "DM si eres +18."
+        ));
+        copies.add(igCopyVape(
+                "FEED",
+                "Diez sabores. Una cuenta.",
+                "VapeWave enseña producto, no milagros. Colección 60K. Valencia. Pedidos por DM. Contenido 18+.",
+                "Pedidos por DM. Solo +18."
+        ));
+        copies.add(igCopyVape(
+                "REEL",
+                "USB-C. Mesh. Sabor.",
+                "Ficha del post, no un claim de salud. VapeWave Valencia. Pregunta precio por DM.",
+                "DM para stock. +18."
+        ));
+        copies.add(igCopyVape(
+                "REEL",
+                "Una misma ola. 60K.",
+                "Ritmo de producto: dispositivo, sabor, CTA. Sin menores, sin ‘deja el tabaco’, sin promesas de algoritmo.",
+                "Pide el sabor por DM."
+        ));
         node.set("copies", copies);
         return objectMapper.writeValueAsString(node);
     }
