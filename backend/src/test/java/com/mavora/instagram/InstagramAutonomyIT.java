@@ -199,9 +199,7 @@ class InstagramAutonomyIT {
                 .retrieve()
                 .body(String.class));
         assertThat(workflow.path("status").asText()).isEqualTo("SUCCEEDED");
-        assertThat(workflow.path("errorMessage").isMissingNode()
-                || workflow.path("errorMessage").isNull()
-                || workflow.path("errorMessage").asText().isBlank()).isTrue();
+        assertThat(workflow.path("errorMessage").asText(null)).isNull();
 
         ResponseEntity<String> slotsResponse = client.get()
                 .uri(base + "/instagram/slots")
@@ -222,7 +220,7 @@ class InstagramAutonomyIT {
             assertThat(slot.path("caption").asText()).isNotBlank();
             assertThat(slot.path("cta").asText()).isNotBlank();
             assertThat(slot.path("scheduledAt").asText()).isNotBlank();
-            assertThat(slot.path("igMediaId").asText()).isBlank();
+            assertThat(slot.path("igMediaId").asText(null)).isNull();
         }
     }
 
