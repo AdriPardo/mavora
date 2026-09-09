@@ -17,10 +17,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MetaConnectionService {
 
+    /**
+     * Permisos que Mavora pide en OAuth. Solo Graph de la cuenta Professional y la
+     * Página ligadas por el dueño: perfil, media propia y publicación. No pedimos
+     * Instagram Public Content Access (hashtags / discovery de terceros), Marketing
+     * API / Ads, ni {@code instagram_manage_insights}: no hay llamadas a {@code /insights};
+     * la analítica es un snapshot que pega el usuario.
+     */
     public static final List<String> REQUIRED_SCOPES = List.of(
             "instagram_basic",
             "instagram_content_publish",
-            "instagram_manage_insights",
             "pages_show_list",
             "pages_read_engagement"
     );

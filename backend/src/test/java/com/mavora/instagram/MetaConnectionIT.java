@@ -57,6 +57,11 @@ class MetaConnectionIT {
         assertThat(setup.path("privacyPolicyUrl").asText()).endsWith("/privacidad");
         assertThat(setup.path("appIconUrl").asText()).endsWith("/meta-app-icon.png");
         assertThat(setup.path("scopes").isArray()).isTrue();
+        assertThat(setup.path("scopes").toString())
+                .contains("instagram_basic", "instagram_content_publish", "pages_show_list", "pages_read_engagement")
+                .doesNotContain("instagram_manage_insights")
+                .doesNotContain("ads_management")
+                .doesNotContain("ads_read");
         assertThat(empty.getBody()).doesNotContain("appSecret");
         assertThat(empty.getBody()).doesNotContain("ciphertext");
 
@@ -109,7 +114,13 @@ class MetaConnectionIT {
         String url = urlBody.path("url").asText();
         assertThat(url).startsWith("https://www.facebook.com/v22.0/dialog/oauth");
         assertThat(URLDecoder.decode(url, StandardCharsets.UTF_8)).contains("client_id=111222333444555");
-        assertThat(url).contains("instagram_content_publish");
+        String decoded = URLDecoder.decode(url, StandardCharsets.UTF_8);
+        assertThat(decoded).contains("instagram_content_publish");
+        assertThat(decoded).contains("instagram_basic");
+        assertThat(decoded).contains("pages_show_list");
+        assertThat(decoded).contains("pages_read_engagement");
+        assertThat(decoded).doesNotContain("instagram_manage_insights");
+        assertThat(decoded).doesNotContain("ads_management");
         assertThat(connectUrl.getBody()).doesNotContain("meta-app-secret-value");
 
         ResponseEntity<String> token = client.post()
