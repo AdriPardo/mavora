@@ -34,5 +34,8 @@ class FakeInstagramProfileReaderTest {
         assertThat(snapshot.recentCaptions()).isNotEmpty();
         assertThat(snapshot.recentCaptions().toString()).doesNotContain("presupuesto");
         assertThat(snapshot.pageAbout()).contains("VapeWave");
+        assertThat(snapshot.pageAbout()).contains("WhatsApp");
+        assertThat(snapshot.pageAbout()).contains("15");
+        assertThat(snapshot.followers()).isNull();
     }
 }

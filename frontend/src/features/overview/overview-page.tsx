@@ -40,7 +40,7 @@ export function OverviewPage() {
       <div className="space-y-6">
         <PageHeader
           title="Empresa leída del perfil"
-          description="Rellenamos lo que Instagram deja claro. El objetivo (métrica, fecha, presupuesto) lo pones tú: no lo inventamos."
+          description="Queremos medir alcance y seguidores. Falta cifra, fecha y presupuesto: no los inventamos."
         />
         <Panel title="Empresa">
           <p className="font-medium text-zinc-900 dark:text-zinc-100">{data.company.name}</p>
@@ -104,7 +104,9 @@ export function OverviewPage() {
         <Panel title="Pipeline de contenido">{data.contentCount} piezas</Panel>
         <Panel title="Campañas">{data.campaignCount} campañas</Panel>
         <Panel title="Instagram">
-          <p>Copy, visuales y horario aunque Instagram no esté conectado. Tú decides si lo publicamos o lo subes a mano.</p>
+          <p>
+            Copy, visuales y horario. Pedidos por DM o WhatsApp a 15 €. Alcance y seguidores se registran en Analítica.
+          </p>
           <Link className="text-zinc-900 underline dark:text-zinc-100" to="/instagram">
             Abrir calendario
           </Link>
