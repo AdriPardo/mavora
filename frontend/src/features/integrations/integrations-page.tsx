@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Panel, StatusBadge } from "@/components/ui/panel";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
@@ -73,6 +74,8 @@ export function IntegrationsPage() {
         }}
         onError={setError}
       />
+
+      {meta.data ? <MetaReviewPanel scopes={meta.data.scopes} /> : null}
 
       <InstagramAccountPanel
         organizationId={organization.id}
@@ -207,7 +210,9 @@ function MetaSetupPanel({
           <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">{data.publicApiUrl}</code>
         </li>
         <li>
-          Pide estos permisos (modo desarrollo: añade tu usuario de Facebook como tester o desarrollador):
+          En Facebook Login pide solo estos permisos (modo desarrollo: añade tu usuario de Facebook como tester). No
+          añadas Instagram Public Content Access ni Marketing API / Ads: Mavora no los usa. Textos para App Review más
+          abajo.
           <ul className="mt-1 flex flex-wrap gap-1">
             {data.scopes.map((scope) => (
               <li key={scope}>
@@ -298,6 +303,54 @@ function MetaSetupPanel({
           />
         </div>
       </form>
+    </Panel>
+  );
+}
+
+const SCOPE_REVIEW_USES: Record<string, string> = {
+  instagram_basic:
+    "Mavora usa instagram_basic para leer, vía Graph API, el perfil de la cuenta Instagram Professional que el titular conecta (username, nombre, biografía, web, media_count y captions recientes de ESA cuenta). Con esos datos rellena huecos de la ficha de empresa y del brief de marca. No accede a cuentas de terceros, no busca hashtags públicos y no scrapea Instagram.",
+  instagram_content_publish:
+    "Mavora usa instagram_content_publish para crear y publicar contenido en la cuenta Instagram Professional conectada: feed (imagen), reel, historia y carrusel. El usuario genera un calendario (copy, visual y hora Europe/Madrid) y, si activa la autonomía, Mavora publica al vencer el slot con POST /{ig-user-id}/media y /media_publish. Los tokens se cifran y no se muestran. No hay DMs automáticos, no hay anuncios y no se publica en cuentas ajenas.",
+  pages_show_list:
+    "Mavora usa pages_show_list en el intercambio OAuth para listar las Páginas de Facebook del usuario (GET /me/accounts) y localizar la Página ligada a su Instagram Professional. No gestiona Páginas de terceros ni publica en Facebook.",
+  pages_read_engagement:
+    "Mavora usa pages_read_engagement para leer de la Página conectada el objeto instagram_business_account (id y username) y, si hay pageId, nombre, about, web y categoría. Eso permite completar la conexión y la ficha. No lee el engagement de páginas públicas ajenas ni administra anuncios.",
+};
+
+function MetaReviewPanel({ scopes }: { scopes: string[] }) {
+  return (
+    <Panel title="Revisión de Meta (App Review)">
+      <p className="mb-3">
+        En «Uso permitido» quita <strong className="font-medium text-zinc-900 dark:text-zinc-100">Instagram Public
+        Content Access</strong> (contenido público de terceros / hashtags) y{" "}
+        <strong className="font-medium text-zinc-900 dark:text-zinc-100">Marketing API Access Tier</strong> (anuncios).
+        Mavora no scrapea Instagram, no descubre posts ajenos y no crea campañas de Ads. No pidas{" "}
+        <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">instagram_manage_insights</code>: la
+        analítica es un número que pegas tú; no hay llamadas a <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">/insights</code>.
+      </p>
+      <p className="mb-3">
+        Pide solo estos permisos. Pega cada texto en «Describe cómo tu app usa este permiso»:
+      </p>
+      <ul className="space-y-4">
+        {scopes.map((scope) => (
+          <li key={scope}>
+            <p className="mb-1 font-medium text-zinc-900 dark:text-zinc-100">
+              <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-900">{scope}</code>
+            </p>
+            {SCOPE_REVIEW_USES[scope] ? (
+              <CopyArea value={SCOPE_REVIEW_USES[scope]} label={`Uso de ${scope}`} />
+            ) : (
+              <p>Este permiso está en el OAuth; no inventes un uso si el código no lo llama.</p>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4">
+        Vídeo (60–90&nbsp;s): Integraciones → «Conectar con Facebook / Instagram» → consentimiento OAuth → cuenta
+        conectada → Calendario (copy y un feed, reel, historia o carrusel de <em>esa</em> cuenta). No grabes el modo
+        demo ni Graph API Explorer. La app tiene que estar en HTTPS público.
+      </p>
     </Panel>
   );
 }
@@ -600,6 +653,40 @@ function isLocalUrl(value: string | undefined): boolean {
   } catch {
     return true;
   }
+}
+
+function CopyArea({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  const areaRef = useRef<HTMLTextAreaElement>(null);
+
+  async function copy() {
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {
+      /* sandbox browsers often block the clipboard API */
+    }
+    const area = areaRef.current;
+    if (!area) {
+      return;
+    }
+    area.focus();
+    area.select();
+    document.execCommand("copy");
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Textarea ref={areaRef} readOnly value={value} aria-label={label} className="min-h-32" />
+      <div>
+        <Button type="button" variant="secondary" onClick={() => void copy()}>
+          {copied ? "Copiado" : "Copiar texto"}
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 function CopyField({ value, label }: { value: string; label: string }) {
