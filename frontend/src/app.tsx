@@ -11,8 +11,9 @@ import { AnalyticsPage } from "@/features/analytics/analytics-page";
 import { KnowledgePage } from "@/features/knowledge/knowledge-page";
 import { ApprovalsPage } from "@/features/approvals/approvals-page";
 import { TeamPage } from "@/features/team/team-page";
-import { PlaceholderPage } from "@/features/placeholders/placeholder-page";
 import { SettingsPage } from "@/features/settings/settings-page";
+import { IntegrationsPage } from "@/features/integrations/integrations-page";
+import { InstagramPage } from "@/features/instagram/instagram-page";
 
 export function App() {
   return (
@@ -45,17 +46,8 @@ export function App() {
           <Route path="/knowledge" element={<KnowledgePage />} />
           <Route path="/approvals" element={<ApprovalsPage />} />
           <Route path="/team" element={<TeamPage />} />
-          <Route
-            path="/integrations"
-            element={
-              <PlaceholderPage
-                title="Integraciones"
-                description="Canales y fuentes de métricas. Contrato listo; adapters después."
-                emptyTitle="Sin integraciones"
-                emptyDescription="El primer recorte no publica solo. Las credenciales nunca se guardarán en texto plano."
-              />
-            }
-          />
+          <Route path="/instagram" element={<InstagramPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>

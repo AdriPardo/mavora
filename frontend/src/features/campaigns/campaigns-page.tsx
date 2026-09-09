@@ -37,7 +37,7 @@ export function CampaignsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Campañas y social"
-        description="Las campañas nacen de la estrategia aprobada. Publicar es manual: no hay autopilot silencioso."
+        description="LinkedIn y el resto del plan social siguen pidiendo un clic. Instagram autónomo vive en su propia página: Mavora publica reels, historias, feed y carruseles sin aprobación humana."
       />
       {campaignItems.length === 0 ? (
         <EmptyState title="Sin campañas" description="Aprueba una estrategia para crear el primer plan de canales." />

@@ -29,6 +29,7 @@ public class FakeLlmProvider implements LlmClient {
                 case CONTENT -> content(request.userPrompt());
                 case SOCIAL -> social();
                 case ANALYST -> analytics();
+                case INSTAGRAM -> instagram(request.userPrompt());
             };
             int tokens = Math.max(32, content.length() / 4);
             return new LlmCompletion(content, request.model(), tokens, tokens, 1);
@@ -97,6 +98,52 @@ public class FakeLlmProvider implements LlmClient {
         publications.add(publication("x", "No más chat para “hacer marketing”. Observar → proponer → aprobar → medir."));
         node.set("publications", publications);
         return objectMapper.writeValueAsString(node);
+    }
+
+    private String instagram(String prompt) throws Exception {
+        String company = extract(prompt, "Company:", "Empresa:");
+        if (company.isBlank()) {
+            company = "la marca";
+        }
+        ObjectNode node = objectMapper.createObjectNode();
+        ArrayNode copies = objectMapper.createArrayNode();
+        copies.add(igCopy("STORY", "¿Sigues improvisando el feed cada lunes?",
+                company + " publica con un sistema: hook, oferta y un solo CTA.",
+                "Responde QUIERO por DM y te mandamos la oferta."));
+        copies.add(igCopy("FEED", "El algoritmo premia constancia, no milagros.",
+                "Visitantes → seguidores → conversación → venta. " + company + " se posiciona con prueba social y una oferta clara.",
+                "Enlace en la bio. Hoy."));
+        copies.add(igCopy("REEL", "Para si tu marketing empieza de cero cada semana.",
+                "En 15 segundos: el problema, la promesa de " + company + " y qué hacer ahora. Ritmo rápido, texto nativo, CTA de venta.",
+                "Guarda y entra en el perfil."));
+        copies.add(igCopy("CAROUSEL", "Guarda esto: de visita a cliente.",
+                "1) Hook. 2) Dolor. 3) Oferta. 4) Prueba. 5) CTA. " + company + " usa este mapa para no perder el scroll.",
+                "Compártelo con tu equipo y entra en la bio."));
+        copies.add(igCopy("STORY", "Una pregunta para tu audiencia.",
+                "Si esto te describe, " + company + " está hecho para ti.",
+                "Reacciona o escribe DEMO."));
+        copies.add(igCopy("REEL", "Lo que el feed no te cuenta del cierre.",
+                "El alcance no paga facturas. " + company + " diseña cada pieza para una acción: seguir, guardar o comprar.",
+                "Toca el enlace de la bio."));
+        copies.add(igCopy("FEED", "Prueba social > promesa vacía.",
+                company + " enseña el producto en público. Menos adjetivos, más resultado.",
+                "Comenta YO y te enviamos el siguiente paso."));
+        copies.add(igCopy("CAROUSEL", "3 errores que matan el reach.",
+                "Texto tarde, CTA flojo, cero ritmo. " + company + " evita los tres con un calendario autónomo.",
+                "Guarda la guía y visita el perfil."));
+        node.set("copies", copies);
+        return objectMapper.writeValueAsString(node);
+    }
+
+    private ObjectNode igCopy(String format, String hook, String caption, String cta) {
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put("format", format);
+        node.put("hook", hook);
+        node.put("caption", caption);
+        node.put("cta", cta);
+        node.set("hashtags", strings("#pymes", "#marketing", "#instagram", "#ventas"));
+        node.put("visualPrompt", "Clean Instagram visual for " + format + ", product-led, no watermark, high contrast.");
+        return node;
     }
 
     private String analytics() throws Exception {

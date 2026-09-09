@@ -99,6 +99,7 @@ public class WorkflowProcessor {
             case CONTENT_CYCLE -> AgentType.CONTENT;
             case SOCIAL_PLAN -> AgentType.SOCIAL;
             case ANALYTICS_CYCLE -> AgentType.ANALYST;
+            case INSTAGRAM_WEEK -> AgentType.INSTAGRAM;
         };
     }
 

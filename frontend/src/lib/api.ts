@@ -327,6 +327,155 @@ export function fetchAnalytics(organizationId: string, signal?: AbortSignal): Pr
   return request<AnalyticsBoard>(orgPath(organizationId, "/analytics"), { signal });
 }
 
+export type InstagramStatus = {
+  provider: string;
+  connected: boolean;
+  username: string | null;
+  igUserId: string | null;
+  autonomyEnabled: boolean;
+  connectedAt: string | null;
+  professionalAccountRequired: boolean;
+};
+
+export type BrandBrief = {
+  voice: string | null;
+  offer: string | null;
+  cta: string | null;
+  audience: string | null;
+  extraNotes: string | null;
+  updatedAt: string | null;
+};
+
+export type MediaAsset = {
+  id: string;
+  kind: string;
+  filename: string;
+  contentType: string;
+  byteSize: number;
+  captionHint: string | null;
+  productId: string | null;
+  url: string;
+  createdAt: string;
+};
+
+export type InstagramSlot = {
+  id: string;
+  format: string;
+  status: string;
+  scheduledAt: string;
+  hook: string;
+  caption: string;
+  cta: string;
+  hashtags: string[];
+  mediaAssetIds: string[];
+  igMediaId: string | null;
+  errorMessage: string | null;
+  publishedAt: string | null;
+};
+
+export type InstagramPlaybook = {
+  timezone: string;
+  principles: string;
+  mix: Array<{ day: string; time: string; format: string }>;
+  llmProvider: string;
+  mediaProvider: string;
+};
+
+export function fetchInstagram(organizationId: string, signal?: AbortSignal): Promise<InstagramStatus> {
+  return request<InstagramStatus>(orgPath(organizationId, "/instagram"), { signal });
+}
+
+export function connectInstagramFake(organizationId: string, username: string): Promise<InstagramStatus> {
+  return request<InstagramStatus>(orgPath(organizationId, "/instagram/connect-fake"), {
+    method: "POST",
+    body: JSON.stringify({ username }),
+  });
+}
+
+export function fetchInstagramConnectUrl(organizationId: string): Promise<{ url: string; provider: string }> {
+  return request(orgPath(organizationId, "/instagram/connect-url"));
+}
+
+export function setInstagramAutonomy(organizationId: string, autonomyEnabled: boolean): Promise<InstagramStatus> {
+  return request<InstagramStatus>(orgPath(organizationId, "/instagram/autonomy"), {
+    method: "PATCH",
+    body: JSON.stringify({ autonomyEnabled }),
+  });
+}
+
+export function disconnectInstagram(organizationId: string): Promise<InstagramStatus> {
+  return request<InstagramStatus>(orgPath(organizationId, "/instagram/disconnect"), { method: "POST" });
+}
+
+export function fetchBrandBrief(organizationId: string, signal?: AbortSignal): Promise<BrandBrief> {
+  return request<BrandBrief>(orgPath(organizationId, "/instagram/brief"), { signal });
+}
+
+export function upsertBrandBrief(
+  organizationId: string,
+  input: {
+    voice?: string;
+    offer?: string;
+    cta?: string;
+    audience?: string;
+    extraNotes?: string;
+  },
+): Promise<BrandBrief> {
+  return request<BrandBrief>(orgPath(organizationId, "/instagram/brief"), {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function fetchMedia(organizationId: string, signal?: AbortSignal): Promise<{ items: MediaAsset[] }> {
+  return request(orgPath(organizationId, "/media"), { signal });
+}
+
+export async function uploadMedia(
+  organizationId: string,
+  file: File,
+  captionHint?: string,
+): Promise<MediaAsset> {
+  const body = new FormData();
+  body.append("file", file);
+  if (captionHint) {
+    body.append("captionHint", captionHint);
+  }
+  const response = await fetch(`${apiBase}${orgPath(organizationId, "/media")}`, {
+    method: "POST",
+    body,
+    credentials: "include",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new ApiError(
+      response.status,
+      typeof payload.title === "string" ? payload.title : undefined,
+      typeof payload.detail === "string" ? payload.detail : undefined,
+    );
+  }
+  return payload as MediaAsset;
+}
+
+export function deleteMedia(organizationId: string, assetId: string): Promise<void> {
+  return request<void>(orgPath(organizationId, `/media/${assetId}`), { method: "DELETE" });
+}
+
+export function fetchInstagramSlots(
+  organizationId: string,
+  signal?: AbortSignal,
+): Promise<{ items: InstagramSlot[] }> {
+  return request(orgPath(organizationId, "/instagram/slots"), { signal });
+}
+
+export function fetchInstagramPlaybook(organizationId: string, signal?: AbortSignal): Promise<InstagramPlaybook> {
+  return request(orgPath(organizationId, "/instagram/playbook"), { signal });
+}
+
+export function generateInstagramWeek(organizationId: string): Promise<Workflow> {
+  return request<Workflow>(orgPath(organizationId, "/instagram/week"), { method: "POST" });
+}
+
 export function recordSnapshot(
   organizationId: string,
   input: { metric: string; value: number; source?: string },

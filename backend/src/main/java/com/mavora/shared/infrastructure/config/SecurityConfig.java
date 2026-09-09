@@ -58,6 +58,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/logout",
+                                "/api/v1/integrations/instagram/callback",
+                                "/api/v1/media/*/file",
                                 "/actuator/health",
                                 "/actuator/health/**",
                                 "/actuator/info",
