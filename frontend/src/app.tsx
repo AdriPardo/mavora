@@ -14,10 +14,13 @@ import { TeamPage } from "@/features/team/team-page";
 import { SettingsPage } from "@/features/settings/settings-page";
 import { IntegrationsPage } from "@/features/integrations/integrations-page";
 import { InstagramPage } from "@/features/instagram/instagram-page";
+import { PrivacyPage } from "@/features/legal/privacy-page";
 
 export function App() {
   return (
     <Routes>
+      <Route path="/privacidad" element={<PrivacyPage />} />
+      <Route path="/privacy" element={<Navigate to="/privacidad" replace />} />
       <Route
         path="/login"
         element={

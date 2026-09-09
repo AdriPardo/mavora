@@ -54,6 +54,8 @@ class MetaConnectionIT {
         assertThat(setup.path("oauthReady").asBoolean()).isFalse();
         assertThat(setup.path("secretConfigured").asBoolean()).isFalse();
         assertThat(setup.path("suggestedRedirectUri").asText()).contains("/api/v1/integrations/instagram/callback");
+        assertThat(setup.path("privacyPolicyUrl").asText()).endsWith("/privacidad");
+        assertThat(setup.path("appIconUrl").asText()).endsWith("/meta-app-icon.png");
         assertThat(setup.path("scopes").isArray()).isTrue();
         assertThat(empty.getBody()).doesNotContain("appSecret");
         assertThat(empty.getBody()).doesNotContain("ciphertext");

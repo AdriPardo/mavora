@@ -350,6 +350,8 @@ export type MetaSetup = {
   publicApiUrl: string;
   publicAppUrl: string;
   suggestedRedirectUri: string;
+  privacyPolicyUrl?: string;
+  appIconUrl?: string;
   scopes: string[];
   developerConsoleUrl: string;
 };
