@@ -84,6 +84,41 @@ public final class Company {
         this.updatedAt = now;
     }
 
+    public java.util.List<String> fillBlanks(
+            String websiteUrl,
+            String description,
+            String market,
+            Instant now
+    ) {
+        java.util.List<String> filled = new java.util.ArrayList<>();
+        if (blank(this.websiteUrl) && notBlank(websiteUrl)) {
+            this.websiteUrl = HttpUrl.normalizeOptional(websiteUrl).orElse(null);
+            if (this.websiteUrl != null) {
+                filled.add("company.websiteUrl");
+            }
+        }
+        if (blank(this.description) && notBlank(description)) {
+            this.description = requireDescription(description);
+            filled.add("company.description");
+        }
+        if (blank(this.market) && notBlank(market)) {
+            this.market = requireMarket(market);
+            filled.add("company.market");
+        }
+        if (!filled.isEmpty()) {
+            this.updatedAt = now;
+        }
+        return filled;
+    }
+
+    private static boolean blank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private static boolean notBlank(String value) {
+        return value != null && !value.isBlank();
+    }
+
     private static String requireName(String name) {
         return requireText(name, "name", 2, 120);
     }

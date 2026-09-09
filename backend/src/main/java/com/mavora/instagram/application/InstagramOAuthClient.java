@@ -4,9 +4,9 @@ import java.time.Instant;
 
 public interface InstagramOAuthClient {
 
-    String authorizeUrl(String state);
+    String authorizeUrl(MetaAppCredentials credentials, String state);
 
-    ConnectedAccount exchange(String code);
+    ConnectedAccount exchange(MetaAppCredentials credentials, String code);
 
     record ConnectedAccount(
             String igUserId,

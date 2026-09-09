@@ -1,13 +1,17 @@
 package com.mavora.instagram.infrastructure.publish;
 
 import com.mavora.instagram.application.InstagramPublisher;
+import com.mavora.instagram.domain.InstagramProvider;
 import java.util.UUID;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(name = "mavora.instagram.provider", havingValue = "fake", matchIfMissing = true)
 public class FakeInstagramPublisher implements InstagramPublisher {
+
+    @Override
+    public boolean supports(InstagramProvider provider) {
+        return provider == InstagramProvider.FAKE;
+    }
 
     @Override
     public PublishResult publish(PublishCommand command) {

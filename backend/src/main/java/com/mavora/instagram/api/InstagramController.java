@@ -7,6 +7,7 @@ import com.mavora.identity.application.MavoraPrincipal;
 import com.mavora.instagram.application.BrandBriefService;
 import com.mavora.instagram.application.InstagramAccountService;
 import com.mavora.instagram.application.InstagramQueryService;
+import com.mavora.instagram.application.MetaConnectionService;
 import com.mavora.instagram.application.MediaLibraryService;
 import com.mavora.instagram.domain.BrandBrief;
 import com.mavora.instagram.domain.InstagramSlot;
@@ -42,6 +43,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class InstagramController {
 
     private final InstagramAccountService accountService;
+    private final MetaConnectionService metaConnectionService;
     private final BrandBriefService briefService;
     private final MediaLibraryService mediaLibraryService;
     private final InstagramQueryService queryService;
@@ -49,12 +51,14 @@ public class InstagramController {
 
     public InstagramController(
             InstagramAccountService accountService,
+            MetaConnectionService metaConnectionService,
             BrandBriefService briefService,
             MediaLibraryService mediaLibraryService,
             InstagramQueryService queryService,
             EnqueueWorkflowService enqueueWorkflowService
     ) {
         this.accountService = accountService;
+        this.metaConnectionService = metaConnectionService;
         this.briefService = briefService;
         this.mediaLibraryService = mediaLibraryService;
         this.queryService = queryService;
@@ -70,12 +74,61 @@ public class InstagramController {
         return accountService.status(new OrganizationId(organizationId), principal.userId());
     }
 
+    @GetMapping("/instagram/meta")
+    @Operation(summary = "Meta app setup for Instagram OAuth")
+    public MetaConnectionService.SetupView metaSetup(
+            @PathVariable UUID organizationId,
+            @AuthenticationPrincipal MavoraPrincipal principal
+    ) {
+        return metaConnectionService.setup(new OrganizationId(organizationId), principal.userId());
+    }
+
+    @PutMapping(value = "/instagram/meta", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public MetaConnectionService.SetupView saveMeta(
+            @PathVariable UUID organizationId,
+            @AuthenticationPrincipal MavoraPrincipal principal,
+            @Valid @RequestBody MetaAppRequest request
+    ) {
+        return metaConnectionService.save(
+                new OrganizationId(organizationId),
+                principal.userId(),
+                request.appId(),
+                request.appSecret(),
+                request.redirectUri(),
+                request.graphVersion()
+        );
+    }
+
+    @DeleteMapping("/instagram/meta")
+    public MetaConnectionService.SetupView clearMeta(
+            @PathVariable UUID organizationId,
+            @AuthenticationPrincipal MavoraPrincipal principal
+    ) {
+        return metaConnectionService.clear(new OrganizationId(organizationId), principal.userId());
+    }
+
     @GetMapping("/instagram/connect-url")
     public InstagramAccountService.ConnectUrl connectUrl(
             @PathVariable UUID organizationId,
             @AuthenticationPrincipal MavoraPrincipal principal
     ) {
         return accountService.connectUrl(new OrganizationId(organizationId), principal.userId());
+    }
+
+    @PostMapping(value = "/instagram/connect-token", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public InstagramAccountService.Status connectToken(
+            @PathVariable UUID organizationId,
+            @AuthenticationPrincipal MavoraPrincipal principal,
+            @Valid @RequestBody ConnectTokenRequest request
+    ) {
+        return accountService.connectWithToken(
+                new OrganizationId(organizationId),
+                principal.userId(),
+                request.username(),
+                request.igUserId(),
+                request.pageId(),
+                request.accessToken()
+        );
     }
 
     @PostMapping(value = "/instagram/connect-fake", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -204,6 +257,22 @@ public class InstagramController {
                 WorkflowType.INSTAGRAM_WEEK,
                 "{}"
         ));
+    }
+
+    public record MetaAppRequest(
+            @NotBlank @Size(min = 5, max = 64) String appId,
+            @Size(max = 256) String appSecret,
+            @Size(max = 500) String redirectUri,
+            @Size(max = 16) String graphVersion
+    ) {
+    }
+
+    public record ConnectTokenRequest(
+            @NotBlank @Size(min = 1, max = 30) String username,
+            @NotBlank @Size(min = 1, max = 64) String igUserId,
+            @Size(max = 64) String pageId,
+            @NotBlank @Size(min = 20, max = 4000) String accessToken
+    ) {
     }
 
     public record ConnectFakeRequest(@NotBlank @Size(min = 1, max = 30) String username) {

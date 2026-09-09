@@ -3,6 +3,7 @@ package com.mavora.instagram.domain;
 import com.mavora.shared.domain.DomainException;
 import com.mavora.shared.domain.OrganizationId;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -19,6 +20,9 @@ public final class InstagramAccount {
     private boolean autonomyEnabled;
     private Instant connectedAt;
     private Instant disconnectedAt;
+    private String importSummary;
+    private String importFields;
+    private Instant importedAt;
     private final Instant createdAt;
     private long version;
 
@@ -34,6 +38,9 @@ public final class InstagramAccount {
             boolean autonomyEnabled,
             Instant connectedAt,
             Instant disconnectedAt,
+            String importSummary,
+            String importFields,
+            Instant importedAt,
             Instant createdAt,
             long version
     ) {
@@ -48,6 +55,9 @@ public final class InstagramAccount {
         this.autonomyEnabled = autonomyEnabled;
         this.connectedAt = Objects.requireNonNull(connectedAt);
         this.disconnectedAt = disconnectedAt;
+        this.importSummary = blankToNull(importSummary);
+        this.importFields = blankToNull(importFields);
+        this.importedAt = importedAt;
         this.createdAt = Objects.requireNonNull(createdAt);
         this.version = version;
     }
@@ -74,6 +84,9 @@ public final class InstagramAccount {
                 true,
                 now,
                 null,
+                null,
+                null,
+                null,
                 now,
                 0
         );
@@ -91,12 +104,16 @@ public final class InstagramAccount {
             boolean autonomyEnabled,
             Instant connectedAt,
             Instant disconnectedAt,
+            String importSummary,
+            String importFields,
+            Instant importedAt,
             Instant createdAt,
             long version
     ) {
         return new InstagramAccount(
                 id, organizationId, provider, igUserId, username, pageId, tokenCiphertext,
-                tokenExpiresAt, autonomyEnabled, connectedAt, disconnectedAt, createdAt, version
+                tokenExpiresAt, autonomyEnabled, connectedAt, disconnectedAt,
+                importSummary, importFields, importedAt, createdAt, version
         );
     }
 
@@ -118,6 +135,27 @@ public final class InstagramAccount {
         this.connectedAt = now;
         this.disconnectedAt = null;
         this.autonomyEnabled = true;
+    }
+
+    public void recordImport(String summary, List<String> fields, Instant now) {
+        this.importSummary = blankToNull(summary);
+        if (this.importSummary != null && this.importSummary.length() > 500) {
+            this.importSummary = this.importSummary.substring(0, 500);
+        }
+        if (fields == null || fields.isEmpty()) {
+            this.importFields = null;
+        } else {
+            String joined = String.join(",", fields);
+            this.importFields = joined.length() > 500 ? joined.substring(0, 500) : joined;
+        }
+        this.importedAt = now;
+    }
+
+    public List<String> filledFromProfile() {
+        if (importFields == null || importFields.isBlank()) {
+            return List.of();
+        }
+        return List.of(importFields.split(","));
     }
 
     public void setAutonomy(boolean enabled) {
@@ -213,6 +251,18 @@ public final class InstagramAccount {
 
     public Instant disconnectedAt() {
         return disconnectedAt;
+    }
+
+    public String importSummary() {
+        return importSummary;
+    }
+
+    public String importFields() {
+        return importFields;
+    }
+
+    public Instant importedAt() {
+        return importedAt;
     }
 
     public Instant createdAt() {

@@ -41,6 +41,15 @@ public class InstagramAccountEntity extends OrgOwnedEntity {
     @Column(name = "disconnected_at")
     private Instant disconnectedAt;
 
+    @Column(name = "import_summary", length = 500)
+    private String importSummary;
+
+    @Column(name = "import_fields", length = 500)
+    private String importFields;
+
+    @Column(name = "imported_at")
+    private Instant importedAt;
+
     public InstagramProvider getProvider() {
         return provider;
     }
@@ -111,5 +120,29 @@ public class InstagramAccountEntity extends OrgOwnedEntity {
 
     public void setDisconnectedAt(Instant disconnectedAt) {
         this.disconnectedAt = disconnectedAt;
+    }
+
+    public String getImportSummary() {
+        return importSummary;
+    }
+
+    public void setImportSummary(String importSummary) {
+        this.importSummary = importSummary;
+    }
+
+    public String getImportFields() {
+        return importFields;
+    }
+
+    public void setImportFields(String importFields) {
+        this.importFields = importFields;
+    }
+
+    public Instant getImportedAt() {
+        return importedAt;
+    }
+
+    public void setImportedAt(Instant importedAt) {
+        this.importedAt = importedAt;
     }
 }

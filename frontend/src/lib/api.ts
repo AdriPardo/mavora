@@ -335,6 +335,23 @@ export type InstagramStatus = {
   autonomyEnabled: boolean;
   connectedAt: string | null;
   professionalAccountRequired: boolean;
+  oauthReady: boolean;
+  filledFromProfile: string[];
+  profileSummary: string | null;
+};
+
+export type MetaSetup = {
+  appId: string;
+  secretConfigured: boolean;
+  redirectUri: string;
+  graphVersion: string;
+  oauthReady: boolean;
+  source: "none" | "organization" | "environment" | string;
+  publicApiUrl: string;
+  publicAppUrl: string;
+  suggestedRedirectUri: string;
+  scopes: string[];
+  developerConsoleUrl: string;
 };
 
 export type BrandBrief = {
@@ -383,6 +400,34 @@ export type InstagramPlaybook = {
 
 export function fetchInstagram(organizationId: string, signal?: AbortSignal): Promise<InstagramStatus> {
   return request<InstagramStatus>(orgPath(organizationId, "/instagram"), { signal });
+}
+
+export function fetchMetaSetup(organizationId: string, signal?: AbortSignal): Promise<MetaSetup> {
+  return request<MetaSetup>(orgPath(organizationId, "/instagram/meta"), { signal });
+}
+
+export function saveMetaSetup(
+  organizationId: string,
+  input: { appId: string; appSecret?: string; redirectUri?: string; graphVersion?: string },
+): Promise<MetaSetup> {
+  return request<MetaSetup>(orgPath(organizationId, "/instagram/meta"), {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function clearMetaSetup(organizationId: string): Promise<MetaSetup> {
+  return request<MetaSetup>(orgPath(organizationId, "/instagram/meta"), { method: "DELETE" });
+}
+
+export function connectInstagramToken(
+  organizationId: string,
+  input: { username: string; igUserId: string; pageId?: string; accessToken: string },
+): Promise<InstagramStatus> {
+  return request<InstagramStatus>(orgPath(organizationId, "/instagram/connect-token"), {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export function connectInstagramFake(organizationId: string, username: string): Promise<InstagramStatus> {

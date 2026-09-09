@@ -43,6 +43,9 @@ public class JpaInstagramAccountRepository implements InstagramAccountRepository
                 entity.isAutonomyEnabled(),
                 entity.getConnectedAt(),
                 entity.getDisconnectedAt(),
+                entity.getImportSummary(),
+                entity.getImportFields(),
+                entity.getImportedAt(),
                 entity.getCreatedAt(),
                 entity.getVersion()
         );
@@ -60,6 +63,9 @@ public class JpaInstagramAccountRepository implements InstagramAccountRepository
         entity.setAutonomyEnabled(account.autonomyEnabled());
         entity.setConnectedAt(account.connectedAt());
         entity.setDisconnectedAt(account.disconnectedAt());
+        entity.setImportSummary(account.importSummary());
+        entity.setImportFields(account.importFields());
+        entity.setImportedAt(account.importedAt());
         entity.setCreatedAt(account.createdAt());
         entity.setVersion(account.version());
     }

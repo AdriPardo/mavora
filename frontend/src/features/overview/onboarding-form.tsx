@@ -126,6 +126,86 @@ export function OnboardingForm({ organizationId }: { organizationId: string }) {
   );
 }
 
+export function GoalOnlyForm({
+  organizationId,
+  defaultMarket,
+}: {
+  organizationId: string;
+  defaultMarket?: string | null;
+}) {
+  const queryClient = useQueryClient();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const form = useForm<{
+    metric: string;
+    targetValue: number;
+    deadline: string;
+    budgetEuros: number;
+    goalMarket: string;
+  }>({
+    defaultValues: {
+      metric: "signups",
+      targetValue: 100,
+      deadline: "",
+      budgetEuros: 1500,
+      goalMarket: defaultMarket || "España",
+    },
+  });
+
+  async function onSubmit(values: {
+    metric: string;
+    targetValue: number;
+    deadline: string;
+    budgetEuros: number;
+    goalMarket: string;
+  }) {
+    setSubmitError(null);
+    try {
+      await createGoal(organizationId, {
+        metric: values.metric,
+        targetValue: values.targetValue,
+        deadline: values.deadline,
+        budgetCents: Math.round(values.budgetEuros * 100),
+        budgetCurrency: "EUR",
+        market: values.goalMarket,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["workspace", organizationId] });
+    } catch (error) {
+      setSubmitError(error instanceof ApiError ? error.message : "No se pudo guardar el objetivo");
+    }
+  }
+
+  return (
+    <form className="max-w-xl space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <p className="text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+        Instagram no dice cuántos clientes quieres ni cuánto puedes gastar. Eso va aquí.
+      </p>
+      <Field label="Métrica del objetivo">
+        <Input {...form.register("metric")} />
+      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Target">
+          <Input type="number" min={1} {...form.register("targetValue")} />
+        </Field>
+        <Field label="Fecha límite">
+          <Input type="date" {...form.register("deadline")} />
+        </Field>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Presupuesto (EUR)">
+          <Input type="number" min={1} step="1" {...form.register("budgetEuros")} />
+        </Field>
+        <Field label="Mercado del objetivo">
+          <Input {...form.register("goalMarket")} />
+        </Field>
+      </div>
+      {submitError ? <p className="text-sm text-red-700 dark:text-red-400">{submitError}</p> : null}
+      <Button type="submit" disabled={form.formState.isSubmitting}>
+        {form.formState.isSubmitting ? "Guardando…" : "Guardar objetivo"}
+      </Button>
+    </form>
+  );
+}
+
 function Field({
   label,
   error,
