@@ -55,7 +55,7 @@ export function IntegrationsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Integraciones"
-        description="Conecta Instagram profesional con tu app de Meta. Las claves y tokens se cifran; el App Secret y los tokens no vuelven a la UI."
+        description="Conecta Instagram profesional con tu app de Meta. Las claves y tokens se cifran; el App Secret y los tokens no vuelven a la UI. Para revisión de Meta hace falta icono + URL de privacidad pública."
       />
       {oauthResult === "connected" || status.data?.connected ? (
         <ImportBanner status={status.data} oauthJustFinished={oauthResult === "connected"} />
@@ -169,6 +169,34 @@ function MetaSetupPanel({
           Crea la app y copia el <strong className="font-medium text-zinc-900 dark:text-zinc-100">Identificador</strong>{" "}
           (App ID) y la <strong className="font-medium text-zinc-900 dark:text-zinc-100">clave secreta</strong> (App
           Secret).
+        </li>
+        <li>
+          En Ajustes básicos, sube el icono de la app (JPG/PNG, 512×512 a 1024×1024, máximo 5&nbsp;MB). Usa este PNG de
+          Mavora (1024×1024):{" "}
+          <a className="text-zinc-900 underline dark:text-zinc-100" href="/meta-app-icon.png" download="meta-app-icon.png">
+            descargar icono
+          </a>
+          . Archivo en el repo: <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">frontend/public/meta-app-icon.png</code>.
+          {data.appIconUrl ? <CopyField value={data.appIconUrl} label="URL del icono de la app" /> : null}
+        </li>
+        <li>
+          En Ajustes básicos, pega la URL de la política de privacidad. Tiene que ser HTTPS público: Meta no acepta
+          localhost. La ruta ya existe en Mavora (
+          <Link className="text-zinc-900 underline dark:text-zinc-100" to="/privacidad">
+            /privacidad
+          </Link>
+          ). Cuando publiques el frontend, pega:
+          <CopyField
+            value={data.privacyPolicyUrl || `${data.publicAppUrl.replace(/\/$/, "")}/privacidad`}
+            label="URL de la política de privacidad"
+          />
+          {isLocalUrl(data.privacyPolicyUrl || data.publicAppUrl) ? (
+            <p className="mt-2 text-sm text-amber-800 dark:text-amber-300">
+              Ahora mismo apunta a local. Cuando tengas un dominio HTTPS, será{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">https://tu-dominio/privacidad</code>
+              {" "}(la misma ruta). Sin ese dominio público, Meta no puede revisar la app.
+            </p>
+          ) : null}
         </li>
         <li>
           En Facebook Login → Ajustes, pega esta URI de redirección OAuth (tiene que coincidir al carácter):
@@ -455,7 +483,7 @@ function DemoPanel({
   onError: (message: string | null) => void;
 }) {
   const queryClient = useQueryClient();
-  const [username, setUsername] = useState("acme.demo");
+  const [username, setUsername] = useState("vapewave.vlc");
   const [open, setOpen] = useState(false);
   const connectFake = useMutation({
     mutationFn: () => connectInstagramFake(organizationId, username),
@@ -560,6 +588,18 @@ function Field({
       {hint ? <span className="mt-1 block text-xs text-zinc-500">{hint}</span> : null}
     </label>
   );
+}
+
+function isLocalUrl(value: string | undefined): boolean {
+  if (!value) {
+    return true;
+  }
+  try {
+    const url = new URL(value);
+    return url.protocol !== "https:" || url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  } catch {
+    return true;
+  }
 }
 
 function CopyField({ value, label }: { value: string; label: string }) {

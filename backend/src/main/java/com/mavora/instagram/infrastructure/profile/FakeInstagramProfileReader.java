@@ -18,6 +18,20 @@ public class FakeInstagramProfileReader implements InstagramProfileReader {
     @Override
     public InstagramProfileSnapshot read(InstagramAccount account, String accessToken, String graphVersion) {
         String username = account.username();
+        if (VapeWaveProfile.USERNAME.equalsIgnoreCase(username)) {
+            return new InstagramProfileSnapshot(
+                    VapeWaveProfile.USERNAME,
+                    VapeWaveProfile.DISPLAY_NAME,
+                    VapeWaveProfile.BIOGRAPHY,
+                    null,
+                    null,
+                    null,
+                    VapeWaveProfile.DISPLAY_NAME,
+                    VapeWaveProfile.CATEGORY,
+                    VapeWaveProfile.ABOUT,
+                    VapeWaveProfile.CAPTIONS
+            );
+        }
         if ("acme.demo".equalsIgnoreCase(username)) {
             return new InstagramProfileSnapshot(
                     username,

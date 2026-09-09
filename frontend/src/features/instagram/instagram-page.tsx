@@ -124,7 +124,7 @@ export function InstagramPage() {
     <div className="space-y-6">
       <PageHeader
         title="Calendario de Instagram"
-        description="DeepSeek escribe el copy. Fal.ai genera las imágenes y los reels. Si Instagram no está conectado, igual te dejamos el texto, el visual y cuándo subirlo."
+        description="Copy, visual y hora de Madrid. Venta solo por DM o WhatsApp a 15 €. Colección 60K. El alcance y los seguidores se miden en Analítica, no se inventan aquí."
       />
 
       {!connected ? (
@@ -181,10 +181,10 @@ export function InstagramPage() {
         />
       </Panel>
 
-      <Panel title="Fotos y vídeos">
+      <Panel title="Logo y fotos de producto">
         <p className="mb-3">
-          Opcional: fotos de producto como referencia. Fal.ai genera la pieza de cada slot (JPEG 4:5 o 9:16; MP4 para
-          reels) aunque no subas nada.
+          Sube el logo y fotos reales de la 60K (JPEG/PNG) o un reel (MP4). Si hay fotos vuestras, el calendario las usa.
+          Si no, generamos. Pista útil: sabor, logo o packshot.
         </p>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
           <Input
@@ -217,7 +217,8 @@ export function InstagramPage() {
                   <p className="mb-2 text-xs uppercase">Vídeo</p>
                 )}
                 <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">{asset.filename}</p>
-                {asset.captionHint ? <p>{asset.captionHint}</p> : null}
+                <p>{asset.generated ? "Generada" : "Vuestra"}</p>
+                {asset.captionHint && !asset.generated ? <p>{asset.captionHint}</p> : null}
                 <Button
                   className="mt-2"
                   variant="ghost"
@@ -239,6 +240,15 @@ export function InstagramPage() {
           {generate.isPending ? "Planificando…" : generateLabel}
         </Button>
       </div>
+      {items.length > 0 ? (
+        <p>
+          Pedido por DM o WhatsApp. 15 € la unidad. Solo 60K.{" "}
+          <Link className="underline" to="/analytics">
+            Registrar alcance y seguidores
+          </Link>
+          .
+        </p>
+      ) : null}
       {generate.error ? (
         <p className="text-red-700 dark:text-red-400">
           {generate.error instanceof ApiError ? generate.error.message : "No se pudo generar la semana"}
@@ -417,7 +427,11 @@ function BriefForm({
     >
       <Input value={voice} onChange={(event) => setVoice(event.target.value)} placeholder="Voz de marca" />
       <Textarea value={offer} onChange={(event) => setOffer(event.target.value)} placeholder="Oferta y producto" />
-      <Input value={cta} onChange={(event) => setCta(event.target.value)} placeholder="CTA de venta (bio, DM, demo…)" />
+      <Input
+        value={cta}
+        onChange={(event) => setCta(event.target.value)}
+        placeholder="CTA de venta (DM o WhatsApp. 15 €. Solo +18.)"
+      />
       <Input value={audience} onChange={(event) => setAudience(event.target.value)} placeholder="Audiencia / ICP" />
       <Textarea
         value={extraNotes}

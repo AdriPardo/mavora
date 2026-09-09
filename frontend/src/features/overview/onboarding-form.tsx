@@ -36,11 +36,11 @@ export function OnboardingForm({ organizationId }: { organizationId: string }) {
       market: "",
       productName: "",
       productDescription: "",
-      metric: "signups",
-      targetValue: 100,
+      metric: "alcance",
+      targetValue: undefined,
       deadline: "",
-      budgetEuros: 1500,
-      goalMarket: "España",
+      budgetEuros: undefined,
+      goalMarket: "Valencia",
     },
   });
 
@@ -82,7 +82,7 @@ export function OnboardingForm({ organizationId }: { organizationId: string }) {
   return (
     <form className="max-w-xl space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
       <p className="text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-        Primero la empresa y un objetivo medible. El CMO no improvisará un plan genérico.
+        Primero la empresa y un objetivo medible (alcance o seguidores). Sin cifra, fecha ni presupuesto no inventamos el objetivo.
       </p>
       <Field label="Nombre de la empresa" error={form.formState.errors.name?.message}>
         <Input {...form.register("name")} />
@@ -99,8 +99,8 @@ export function OnboardingForm({ organizationId }: { organizationId: string }) {
       <Field label="Producto principal" error={form.formState.errors.productName?.message}>
         <Input {...form.register("productName")} />
       </Field>
-      <Field label="Métrica del objetivo" error={form.formState.errors.metric?.message}>
-        <Input {...form.register("metric")} />
+      <Field label="Métrica del objetivo (alcance o seguidores)" error={form.formState.errors.metric?.message}>
+        <Input placeholder="alcance" {...form.register("metric")} />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Target" error={form.formState.errors.targetValue?.message}>
@@ -137,34 +137,40 @@ export function GoalOnlyForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const form = useForm<{
     metric: string;
-    targetValue: number;
+    targetValue: number | undefined;
     deadline: string;
-    budgetEuros: number;
+    budgetEuros: number | undefined;
     goalMarket: string;
   }>({
     defaultValues: {
-      metric: "signups",
-      targetValue: 100,
+      metric: "alcance",
+      targetValue: undefined,
       deadline: "",
-      budgetEuros: 1500,
-      goalMarket: defaultMarket || "España",
+      budgetEuros: undefined,
+      goalMarket: defaultMarket || "Valencia",
     },
   });
 
   async function onSubmit(values: {
     metric: string;
-    targetValue: number;
+    targetValue: number | undefined;
     deadline: string;
-    budgetEuros: number;
+    budgetEuros: number | undefined;
     goalMarket: string;
   }) {
     setSubmitError(null);
+    const target = Number(values.targetValue);
+    const budget = Number(values.budgetEuros);
+    if (!values.metric?.trim() || !values.deadline || !Number.isFinite(target) || target <= 0 || !Number.isFinite(budget) || budget <= 0) {
+      setSubmitError("Falta cifra, fecha o presupuesto. No guardamos un objetivo inventado.");
+      return;
+    }
     try {
       await createGoal(organizationId, {
         metric: values.metric,
-        targetValue: values.targetValue,
+        targetValue: target,
         deadline: values.deadline,
-        budgetCents: Math.round(values.budgetEuros * 100),
+        budgetCents: Math.round(budget * 100),
         budgetCurrency: "EUR",
         market: values.goalMarket,
       });
@@ -177,10 +183,11 @@ export function GoalOnlyForm({
   return (
     <form className="max-w-xl space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
       <p className="text-sm leading-6 text-zinc-500 dark:text-zinc-400">
-        Instagram no dice cuántos clientes quieres ni cuánto puedes gastar. Eso va aquí.
+        Medimos alcance y seguidores. Pon una cifra real, una fecha y un presupuesto; si no los tienes, déjalo vacío y no
+        guardes un objetivo inventado.
       </p>
-      <Field label="Métrica del objetivo">
-        <Input {...form.register("metric")} />
+      <Field label="Métrica del objetivo (alcance o seguidores)">
+        <Input {...form.register("metric")} placeholder="alcance" />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Target">
