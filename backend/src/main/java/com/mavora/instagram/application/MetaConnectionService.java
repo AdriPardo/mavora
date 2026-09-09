@@ -85,6 +85,8 @@ public class MetaConnectionService {
                 publicApiUrl,
                 publicAppUrl,
                 defaultRedirectUri,
+                publicAppUrl + "/privacidad",
+                publicAppUrl + "/meta-app-icon.png",
                 REQUIRED_SCOPES,
                 "https://developers.facebook.com/apps/"
         );
@@ -185,6 +187,8 @@ public class MetaConnectionService {
             String publicApiUrl,
             String publicAppUrl,
             String suggestedRedirectUri,
+            String privacyPolicyUrl,
+            String appIconUrl,
             List<String> scopes,
             String developerConsoleUrl
     ) {
