@@ -168,7 +168,8 @@ public class MediaLibraryService {
                 asset.captionHint(),
                 asset.productId(),
                 signed.url(),
-                asset.createdAt()
+                asset.createdAt(),
+                asset.isGenerated()
         );
     }
 
@@ -194,7 +195,8 @@ public class MediaLibraryService {
             String captionHint,
             UUID productId,
             String url,
-            java.time.Instant createdAt
+            java.time.Instant createdAt,
+            boolean generated
     ) {
     }
 }

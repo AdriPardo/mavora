@@ -373,6 +373,7 @@ export type MediaAsset = {
   productId: string | null;
   url: string;
   createdAt: string;
+  generated?: boolean;
 };
 
 export type InstagramSlot = {

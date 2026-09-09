@@ -181,10 +181,10 @@ export function InstagramPage() {
         />
       </Panel>
 
-      <Panel title="Fotos y vídeos">
+      <Panel title="Logo y fotos de producto">
         <p className="mb-3">
-          Opcional: fotos de producto como referencia. Fal.ai genera la pieza de cada slot (JPEG 4:5 o 9:16; MP4 para
-          reels) aunque no subas nada.
+          Sube el logo y fotos reales de la 60K (JPEG/PNG) o un reel (MP4). Si hay fotos vuestras, el calendario las usa.
+          Si no, generamos. Pista útil: sabor, logo o packshot.
         </p>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
           <Input
@@ -217,7 +217,8 @@ export function InstagramPage() {
                   <p className="mb-2 text-xs uppercase">Vídeo</p>
                 )}
                 <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">{asset.filename}</p>
-                {asset.captionHint ? <p>{asset.captionHint}</p> : null}
+                <p>{asset.generated ? "Generada" : "Vuestra"}</p>
+                {asset.captionHint && !asset.generated ? <p>{asset.captionHint}</p> : null}
                 <Button
                   className="mt-2"
                   variant="ghost"

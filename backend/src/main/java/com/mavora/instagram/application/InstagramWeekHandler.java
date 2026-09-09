@@ -291,7 +291,15 @@ public class InstagramWeekHandler implements WorkflowHandler {
     ) {
         int count = format == InstagramFormat.CAROUSEL ? 2 : 1;
         List<UUID> ids = new ArrayList<>();
+        List<MediaAsset> ownedImages = images.stream().filter(asset -> !asset.isGenerated()).toList();
+        List<MediaAsset> ownedVideos = videos.stream().filter(asset -> !asset.isGenerated()).toList();
         for (int i = 0; i < count; i++) {
+            MediaKind kind = format == InstagramFormat.REEL ? MediaKind.VIDEO : MediaKind.IMAGE;
+            UUID owned = pickOwned(kind, ownedImages, ownedVideos, index + i);
+            if (owned != null) {
+                ids.add(owned);
+                continue;
+            }
             String prompt = copy.visualPrompt();
             if (prompt == null || prompt.isBlank()) {
                 prompt = defaultVisual(format, null);
@@ -299,7 +307,6 @@ public class InstagramWeekHandler implements WorkflowHandler {
             if (i > 0) {
                 prompt = prompt + " Slide " + (i + 1) + ", complementary composition.";
             }
-            MediaKind kind = format == InstagramFormat.REEL ? MediaKind.VIDEO : MediaKind.IMAGE;
             String aspect = (format == InstagramFormat.STORY || format == InstagramFormat.REEL) ? "9:16" : "4:5";
             try {
                 MediaGenerator.GeneratedMedia generated = mediaGenerator.generate(
@@ -326,6 +333,21 @@ public class InstagramWeekHandler implements WorkflowHandler {
             ids.add(images.get(index % images.size()).id());
         }
         return ids;
+    }
+
+    private static UUID pickOwned(
+            MediaKind kind,
+            List<MediaAsset> ownedImages,
+            List<MediaAsset> ownedVideos,
+            int index
+    ) {
+        if (kind == MediaKind.VIDEO && !ownedVideos.isEmpty()) {
+            return ownedVideos.get(index % ownedVideos.size()).id();
+        }
+        if (kind == MediaKind.IMAGE && !ownedImages.isEmpty()) {
+            return ownedImages.get(index % ownedImages.size()).id();
+        }
+        return null;
     }
 
     private static UUID fallbackAsset(
