@@ -455,7 +455,7 @@ function DemoPanel({
   onError: (message: string | null) => void;
 }) {
   const queryClient = useQueryClient();
-  const [username, setUsername] = useState("acme.demo");
+  const [username, setUsername] = useState("vapewave.vlc");
   const [open, setOpen] = useState(false);
   const connectFake = useMutation({
     mutationFn: () => connectInstagramFake(organizationId, username),

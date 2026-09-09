@@ -92,6 +92,47 @@ class InstagramBusinessImportIT {
     }
 
     @Test
+    void vapewaveFakeProfileFillsBrandWithoutInventingBudget() throws Exception {
+        RestClient client = RegisteredOrg.restClient(port);
+        RegisteredOrg org = RegisteredOrg.register(client, objectMapper, "Vape Wave Org");
+        String cookie = org.cookie;
+        String base = "/api/v1/organizations/" + org.organizationId;
+
+        ResponseEntity<String> connected = client.post()
+                .uri(base + "/instagram/connect-fake")
+                .header(HttpHeaders.COOKIE, cookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"username\":\"vapewave.vlc\"}")
+                .retrieve()
+                .toEntity(String.class);
+        assertThat(connected.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode status = objectMapper.readTree(connected.getBody());
+        assertThat(status.path("username").asText()).isEqualTo("vapewave.vlc");
+        assertThat(status.path("filledFromProfile").toString()).contains("company.name");
+        assertThat(connected.getBody()).doesNotContain("token");
+
+        JsonNode profile = objectMapper.readTree(client.get()
+                .uri(base + "/company")
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .body(String.class));
+        assertThat(profile.path("name").asText()).isEqualTo("VapeWave");
+        assertThat(profile.path("websiteUrl").asText("")).isBlank();
+        assertThat(profile.path("market").asText()).contains("Valencia");
+        assertThat(profile.path("products").get(0).path("name").asText()).contains("60K");
+
+        JsonNode brief = objectMapper.readTree(client.get()
+                .uri(base + "/instagram/brief")
+                .header(HttpHeaders.COOKIE, cookie)
+                .retrieve()
+                .body(String.class));
+        assertThat(brief.path("cta").asText()).contains("DM");
+        assertThat(brief.path("audience").asText()).contains("18");
+        assertThat(brief.path("offer").asText()).doesNotContain("presupuesto");
+        assertThat(brief.path("extraNotes").asText()).contains("No inventamos");
+    }
+
+    @Test
     void reconnectDoesNotOverwriteExistingCompany() throws Exception {
         RestClient client = RegisteredOrg.restClient(port);
         RegisteredOrg org = RegisteredOrg.register(client, objectMapper, "Keep Name");
